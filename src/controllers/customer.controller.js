@@ -29,7 +29,7 @@ const getCustomers = catchAsync(async (req, res) => {
 const getCustomerById = catchAsync(async (req, res) => {
     const customer = await customerService.getCustomerById(req.params.id);
     res.status(httpStatus.OK).json(response({
-        message: "Customer retrieved successfully",
+        message: "Customer retrieved successfully", 
         status: "OK",
         statusCode: httpStatus.OK,
         data: {
