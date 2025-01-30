@@ -1,4 +1,4 @@
-const { Admin } = require("../models");
+const {  User } = require("../models");
 const ApiError = require("../utils/ApiError"); // Custom error handling utility
 const httpStatus = require("http-status");
 
@@ -25,7 +25,7 @@ const getAllAdmins = async (page = 1, limit = 10, role = "admin") => {
         const skip = (page - 1) * limit;
 
         // Filter admins by role
-        const admins = await Admin.find({ role }).skip(skip).limit(limit);
+        const admins = await User.find({ role }).skip(skip).limit(limit);
 
         // Count only admins
         const totalAdmins = await Admin.countDocuments({ role });

@@ -4,6 +4,7 @@ const userService = require("./user.service");
 const Token = require("../models/token.model");
 const ApiError = require("../utils/ApiError");
 const { tokenTypes } = require("../config/tokens");
+const User = require("../models/user.model");
 
 
 const loginUserWithEmailAndPassword = async (email, password) => {
@@ -130,7 +131,7 @@ const verifyNumber = async (phoneNumber, otpCode, email) => {
     user.isPhoneNumberVerified = true;
     user.phoneNumberOTP = null;
     await user.save();
-    return  user;
+    return user;
   }
 };
 
@@ -147,6 +148,60 @@ const deleteMe = async (password, reqUser) => {
   return user;
 };
 
+const getAllAdmins = async (page = 1, limit = 10, role = "admin") => {
+  try {
+    const skip = (page - 1) * limit;
+
+    // Filter only admins
+    const admins = await User.find({ role: "subAdmin" }).skip(skip).limit(limit);
+
+    // Count only admin users
+    const totalAdmins = await User.countDocuments({ role: "subAdmin" });
+
+    return {
+      admins,
+      totalAdmins,
+      totalPages: Math.ceil(totalAdmins / limit),
+      currentPage: page,
+    };
+  } catch (error) {
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
+  }
+};
+
+const getAdmin = async (id) => {
+  const admin = await User.findById(id);
+  if (!admin) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Admin not found");
+  }
+  return admin;
+}
+
+const blockUser = async (id) => {
+  const user = await User.findById(id);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+  user.isBlocked = !user.isBlocked;
+  await user.save();
+  return user;
+}
+
+const editUser = async (id, reqBody) => {
+  const user = await User.findById(id);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+  user.fullName = reqBody.fullName;
+  user.email = reqBody.email;
+  user.phoneNumber = reqBody.phoneNumber;
+  user.role = reqBody.role;
+  user.message = reqBody.message;
+  await user.save();
+  return user;
+}
+
+
 module.exports = {
   loginUserWithEmailAndPassword,
   logout,
@@ -156,4 +211,8 @@ module.exports = {
   deleteMe,
   changePassword,
   verifyNumber,
+  getAllAdmins,
+  getAdmin,
+  blockUser,
+  editUser
 };

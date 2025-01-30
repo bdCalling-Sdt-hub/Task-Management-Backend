@@ -44,9 +44,11 @@ const userSchema = mongoose.Schema(
       },
       private: true, // used by the toJSON plugin
     },
+
     role: {
       type: String,
       enum: roles,
+      require: true,
     },
     rand: {
       type: Number,
@@ -57,6 +59,11 @@ const userSchema = mongoose.Schema(
       type: Number,
       required: false,
     },
+    message: {
+      type: String,
+      require: true
+    },
+
     // nidNumber: {
     //   type: Number,
     //   required: false,
@@ -113,10 +120,15 @@ const userSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    isDeleted: { 
+    isDeleted: {
       type: Boolean,
-       default: false 
+      default: false
     },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    }
+
   },
   {
     timestamps: true,

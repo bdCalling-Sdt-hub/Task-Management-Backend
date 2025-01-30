@@ -12,6 +12,15 @@ const {
 const register = catchAsync(async (req, res) => {
   const isUser = await userService.getUserByEmail(req.body.email);
 
+  if (isUser) {
+    return res.status(httpStatus.OK).json({
+      message: "Email already Exist.",
+      status: "OK",
+      statusCode: httpStatus.OK,
+      data: {},
+    })
+  }
+
   if (isUser && isUser.isEmailVerified === false) {
     const user = await userService.isUpdateUser(isUser.id, req.body);
     const tokens = await tokenService.generateAuthTokens(user);
@@ -58,9 +67,9 @@ const login = catchAsync(async (req, res) => {
   if (isUser?.isDeleted === true) {
     throw new ApiError(httpStatus.BAD_REQUEST, "This Account is Deleted");
   }
-  if (isUser?.isEmailVerified === false) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Email not verified");
-  }
+  // if (isUser?.isEmailVerified === false) {
+  //   throw new ApiError(httpStatus.BAD_REQUEST, "Email not verified");
+  // }
   if (!isUser) {
     throw new ApiError(httpStatus.NOT_FOUND, "No users found with this email");
   }
@@ -192,6 +201,66 @@ const deleteMe = catchAsync(async (req, res) => {
   );
 });
 
+const getAllAdmins = catchAsync(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const result = await authService.getAllAdmins(page, limit);
+  res.status(httpStatus.OK).json(
+    response({
+      message: "Admins retrieved successfully",
+      status: "OK",
+      statusCode: httpStatus.OK,
+      data: {
+        admins: result.admins,
+        pagination: {
+          totalAdmins: result.totalAdmins,
+          totalPages: result.totalPages,
+          currentPage: result.currentPage,
+        },
+      },
+    })
+  );
+});
+
+const getAdmin = catchAsync(async (req, res) => {
+  const result = await authService.getAdmin(req.params.id);
+  res.status(httpStatus.OK).json(
+    response({
+      message: "Admin Get successfully",
+      status: "OK",
+      statusCode: httpStatus.OK,
+      data: { admin: result },
+    })
+  );
+
+})
+
+const blockUser = catchAsync(async (req, res) => {
+  const result = await authService.blockUser(req.params.id);
+  res.status(httpStatus.OK).json(
+    response({
+      message: "User updated successfully",
+      status: "OK",
+      statusCode: httpStatus.OK,
+      data: { result },
+    })
+  );
+})
+
+
+const editUser = catchAsync(async (req, res) => {
+  const result = await authService.editUser(req.params.id, req.body);
+  res.status(httpStatus.OK).json(
+    response({
+      message: "User updated successfully",
+      status: "OK",
+      statusCode: httpStatus.OK,
+      data: { result },
+    })
+  );
+})
+
+
 module.exports = {
   register,
   login,
@@ -203,4 +272,8 @@ module.exports = {
   verifyEmail,
   deleteMe,
   changePassword,
+  getAllAdmins,
+  getAdmin,
+  blockUser,
+  editUser
 };
