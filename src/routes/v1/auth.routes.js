@@ -30,7 +30,7 @@ router.post('/register', auth('admin'), validate(authValidation.register), authC
 router.get('/all-admins', auth('admin'), authController.getAllAdmins)
 router.get('/:id', auth('commonForAdmin'), authController.getAdmin)
 router.patch('/block/:id', auth('admin'), authController.blockUser)
-router.patch('/update/:id', auth('admin'), authController.editUser)
+router.patch('/update/:id', auth('commonForAdmin'), authController.editUser)
 
 module.exports = router;
 

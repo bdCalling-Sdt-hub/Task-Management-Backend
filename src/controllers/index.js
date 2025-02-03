@@ -8,9 +8,11 @@ module.exports.notificationController = require('./notification.controller');
 module.exports.withdrawalController = require('./withdrawal.controller');
 module.exports.paymentController = require('./payment.controller');
 module.exports.adminController = require('./admin.controller');
-
-module.exports.taskController = require('./task.controller');
 module.exports.submitController = require('./submit.controller');
+
+
+module.exports.memberController = require('./member.controller');
+module.exports.taskController = require('./task.controller');
 
 
 

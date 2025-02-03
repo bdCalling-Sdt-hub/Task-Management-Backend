@@ -1,98 +1,257 @@
-const { taskService } = require("../services");
-const ApiError = require("../utils/ApiError");
-const catchAsync = require("../utils/catchAsync");
+const taskService = require('../services/task.service');
+const httpStatus = require('http-status');
+const response = require('../config/response');
 
-const createTask = catchAsync(async (req, res, next) => {
-    const { taskType, taskClassName, taskName, tasks, assignTaskManager, assignCustomer } = req.body;
-
-    // Validate required fields
-    if (!taskType || !taskClassName || !taskName || !tasks) {
-        throw new ApiError(400, "All fields (taskType, taskClassName, taskName, tasks) are required");
+const createTask = async (req, res) => {
+    try {
+        const taskData = req.body;
+        const newTask = await taskService.createTask(taskData);
+        // console.log(newTask);
+        res.status(httpStatus.CREATED).json(
+            response({
+                message: 'Task created successfully',
+                status: 'OK',
+                statusCode: httpStatus.CREATED,
+                data: {},
+            })
+        );
+    } catch (error) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json(
+            response({
+                message: error.message,
+                status: 'ERROR',
+                statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+            })
+        );
     }
+};
 
-    const task = await taskService.createTask({ taskType, taskClassName, taskName, tasks, assignTaskManager, assignCustomer });
-
-    res.status(201).json({
-        message: "Task created successfully",
-        status: "OK",
-        statusCode: 201,
-        task,
-    });
-});
-
-const getAllTasks = catchAsync(async (req, res, next) => {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-
-    const result = await taskService.getAllTasks(page, limit);
-
-    res.status(200).json({
-        message: "Tasks retrieved successfully",
-        status: "OK",
-        statusCode: 200,
-        tasks: result.tasks,
-        pagination: {
-            totalTasks: result.totalTasks,
-            totalPages: result.totalPages,
-            currentPage: result.currentPage,
-        },
-    });
-});
-
-const getTask = catchAsync(async (req, res, next) => {
-    const { id } = req.params;
-
-    const task = await taskService.getTask(id);
-
-    // Check if task exists
-    if (!task) {
-        throw new ApiError(404, "Task not found");
+const createSubTask = async (req, res) => {
+    try {
+        const taskData = req.body;
+        const newTask = await taskService.createSubTask(taskData);
+        res.status(httpStatus.CREATED).json(
+            response({
+                message: 'Sub Task created successfully',
+                status: 'OK',
+                statusCode: httpStatus.CREATED,
+                data: newTask,
+            })
+        );
+    } catch (error) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json(
+            response({
+                message: error.message,
+                status: 'ERROR',
+                statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+            })
+        );
     }
+};
 
-    res.status(200).json({
-        message: "Task retrieved successfully",
-        status: "OK",
-        statusCode: 200,
-        task,
-    });
-});
+const getAllTasks = async (req, res) => {
+    try {
+        const { page = 1, limit = 10 } = req.query; // Get page and limit from query params (defaults to 1 and 10 if not provided)
+        const paginationResult = await taskService.getAllTasks(Number(page), Number(limit));
 
-const updateTask = catchAsync(async (req, res, next) => {
-    const { id } = req.params;
-    const { taskType, taskClassName, taskName, tasks, assignCustomer } = req.body;
+        res.status(httpStatus.OK).json(
+            response({
+                message: 'Tasks retrieved successfully',
+                status: 'OK',
+                statusCode: httpStatus.OK,
+                data: {
+                    data: paginationResult.tasks,
+                    pagination: {
+                        totalTasks: paginationResult.totalTasks,
+                        totalPages: paginationResult.totalPages,
+                        currentPage: paginationResult.currentPage,
+                        perPage: Number(limit),
+                    }
+                }
 
-    // Validate required fields
-    if (!taskType || !taskClassName || !taskName || !tasks) {
-        throw new ApiError(400, "All fields (taskType, taskClassName, taskName, tasks) are required");
+                ,
+
+            })
+        );
+    } catch (error) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json(
+            response({
+                message: error.message,
+                status: 'ERROR',
+                statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+            })
+        );
     }
+};
 
-    const task = await taskService.updateTask(id, { taskType, taskClassName, taskName, tasks });
+const getSingleTask = async (req, res) => {
+    try {
+        console.log(req.params.userID);
 
-    res.status(200).json({
-        message: "Task updated successfully",
-        status: "OK",
-        statusCode: 200,
-        task,
-    });
-});
 
-const getMyDailyTask = catchAsync(async (req, res, next) => {
-    const { id } = req.params;
 
-    const task = await taskService.getMyDailyTask(id);
-
-    // Check if task exists
-    if (!task) {
-        throw new ApiError(404, "Task not found");
+        const task = await taskService.getSingleTask(req.params.userID);  // Pass userID
+        res.status(httpStatus.OK).json(
+            response({
+                message: 'Task retrieved successfully',
+                status: 'OK',
+                statusCode: httpStatus.OK,
+                data: task,
+            })
+        );
+    } catch (error) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json(
+            response({
+                message: error.message,
+                status: 'ERROR',
+                statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+            })
+        );
     }
+};
 
-    res.status(200).json({
-        message: "Task retrieved successfully",
-        status: "OK",
-        statusCode: 200,
-        task,
-    });
-});
+const getSingleSubTask = async (req, res) => {
+    try {
+        console.log("Received Email:", req.params.email); // Debugging
+
+        if (!req.params.email) {
+            return res.status(httpStatus.BAD_REQUEST).json(
+                response({
+                    message: "Email is required",
+                    status: "ERROR",
+                    statusCode: httpStatus.BAD_REQUEST,
+                })
+            );
+        }
+
+        const task = await taskService.getSingleSubTask(req.params.email);
+
+        res.status(httpStatus.OK).json(
+            response({
+                message: "Task retrieved successfully",
+                status: "OK",
+                statusCode: httpStatus.OK,
+                data: task,
+            })
+        );
+    } catch (error) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json(
+            response({
+                message: error.message,
+                status: "ERROR",
+                statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+            })
+        );
+    }
+};
 
 
-module.exports = { createTask, getAllTasks, getTask, updateTask, getMyDailyTask };
+// Controller Function
+
+const updateManySubTasks = async (req, res) => {
+    try {
+        console.log("Request Body:", req.body); // Debugging
+
+        const updatedTasks = await taskService.updateManySubTasks(req.body);
+
+        res.status(httpStatus.OK).json(
+            response({
+                message: 'Tasks updated successfully',
+                status: 'OK',
+                statusCode: httpStatus.OK,
+                data: updatedTasks,
+            })
+        );
+    } catch (error) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json(
+            response({
+                message: error.message,
+                status: 'ERROR',
+                statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+            })
+        );
+    }
+};
+
+
+const getAllTaskRequestToManager = async (req, res) => {
+    try {
+        const tasks = await taskService.getAllTaskRequestToManager();  // Pass userID
+        res.status(httpStatus.OK).json(
+            response({
+                message: 'Tasks retrieved successfully',
+                status: 'OK',
+                statusCode: httpStatus.OK,
+                data: tasks,
+            })
+        );
+    } catch (error) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json(
+            response({
+                message: error.message,
+                status: 'ERROR',
+                statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+            })
+        );
+    }
+};
+
+
+
+const getAllSubTask = async (req, res) => {
+    try {
+        const tasks = await taskService.getAllSubTask(req.params.id);  // Pass userID
+        res.status(httpStatus.OK).json(
+            response({
+                message: 'Tasks retrieved successfully',
+                status: 'OK',
+                statusCode: httpStatus.OK,
+                data: tasks,
+            })
+        );
+    } catch (error) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json(
+            response({
+                message: error.message,
+                status: 'ERROR',
+                statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+            })
+        );
+    }
+};
+
+const updateManyTask = async (req, res) => {
+    try {
+        const updatedTasks = await taskService.updateManyTask(req.body);
+
+        res.status(httpStatus.OK).json(
+            response({
+                message: 'Tasks updated successfully',
+                status: 'OK',
+                statusCode: httpStatus.OK,
+                data: updatedTasks,
+            })
+        );
+    } catch (error) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json(
+            response({
+                message: error.message,
+                status: 'ERROR',
+                statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+            })
+        );
+    }
+};
+
+
+module.exports = {
+    createTask,
+    getAllTasks,
+    createSubTask,
+    getSingleTask,
+    getSingleSubTask,
+    updateManySubTasks,
+    getAllSubTask,
+    updateManyTask,
+    getAllTaskRequestToManager
+};

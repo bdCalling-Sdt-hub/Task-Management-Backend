@@ -12,6 +12,7 @@ module.exports.notificationService = require('./notification.service')
 module.exports.adminService = require('./admin.service')
 module.exports.taskService = require('./task.service')
 module.exports.submitService = require('./submit.service')
+module.exports.memberService = require('./member.service')
 
 
 

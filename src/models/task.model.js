@@ -1,33 +1,34 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-const TaskSchema = new mongoose.Schema(
-    {
-        taskType: {
-            type: String,
-            // required: true,
-            enum: ["daily", "weekly"], // Can be extended if needed
-        },
-        taskClassName: {
-            type: String,
-            // required: true,
-        },
-        taskName: {
-            type: String,
-            // required: true,
-        },
-        tasks: {
-            type: [String],
-        },
-        assignTaskManager: {
-            type: Array,
-            default: [],
-        },
-        assignCustomer: {
-            type: Array,
-            default: [],
-        }
+const taskSchema = new mongoose.Schema({
+    taskType: {
+        type: String,
+        enum: ['Daily', 'Weekly'],
+        required: true,
     },
-    { timestamps: true }
-);
+    userID: {
+        type: String,
+        // required: true,
+    },
+    
+    taskClassName: {
+        type: String,
+        required: true,
+    },
+    taskName: {
+        type: String,
+        required: true,
+    },
+    taskDescription: {
+        type: String,
+        required: true,
+    },
+    subTasks: [{
+        type: String,
+        required: false,
+    }],
+}, { timestamps: true });
 
-module.exports = mongoose.model("Task", TaskSchema);
+const Task = mongoose.model('Task', taskSchema);
+
+module.exports = Task;

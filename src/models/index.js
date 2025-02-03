@@ -13,7 +13,9 @@ module.exports.About = require('./about.model')
 module.exports.Withdrawal = require('./withdrawal.model')
 module.exports.SubmitTask = require('./submitTask.model')
 module.exports.Interest = require('./interest.model')
+module.exports.SubTask = require('./subTask.model')
 
+module.exports.Member = require('./member.model')
 
 
 

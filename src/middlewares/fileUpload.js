@@ -4,14 +4,14 @@ const path = require("path");
 module.exports = function (UPLOADS_FOLDER) {
   const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-      cb(null, UPLOADS_FOLDER); // Use the provided destination folder
+      cb(null, UPLOADS_FOLDER); // ✅ Use the provided destination folder
     },
     filename: (req, file, cb) => {
       const fileExt = path.extname(file.originalname);
       const filename =
         file.originalname
           .replace(fileExt, "")
-          .toLocaleLowerCase()
+          .toLowerCase()
           .split(" ")
           .join("-") +
         "-" +
@@ -24,23 +24,18 @@ module.exports = function (UPLOADS_FOLDER) {
   const upload = multer({
     storage: storage,
     limits: {
-      fileSize: 200000000000000000000000000, // 20MB
+      fileSize: 20 * 1024 * 1024, // ✅ 20MB limit
     },
     fileFilter: (req, file, cb) => {
-      if (
-        file.mimetype == "image/jpg" ||
-        file.mimetype == "image/png" ||
-        file.mimetype == "image/jpeg" ||
-        file.mimetype == "image/heic" ||
-        file.mimetype == "image/heif"
-      ) {
-        cb(null, true);
+      const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/heic", "image/heif"];
 
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
       } else {
-        cb(new Error("Only jpg, png, jpeg format allowed!"));
+        cb(new Error("Only jpg, png, jpeg, heic, heif formats are allowed!"));
       }
     },
   });
 
-  return upload; // Return the configured multer upload middleware
+  return upload; // ✅ Return multer instance
 };
