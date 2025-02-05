@@ -25,14 +25,14 @@ const createUser = async (userBody) => {
 
   const referralCode = generateReferralCode();
 
-  if (userBody.role === "admin" || userBody.role === "subadmin") {
+  if (userBody.role === "admin" || userBody.role === "subAdmin") {
     userBody.referralCode = referralCode;
   }
 
   const oneTimeCode =
     Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
 
-  if (userBody.role === "admin" || userBody.role === "subadmin") {
+  if (userBody.role === "admin" || userBody.role === "subAdmin") {
     sendEmailVerification(userBody.email, oneTimeCode);
   }
   return User.create({ ...userBody, oneTimeCode });

@@ -7,8 +7,13 @@ const jwt = require("jsonwebtoken");
 const { Activity } = require("../models");
 
 const verifyCallback =
-  (req, resolve, reject, requiredRights) => async (err, user, info) => {
-    if (err || info || !user) {
+  (req, resolve, reject, requiredRights) => async (err, user , info) => {
+    // console.log("req", req);
+    // console.log(resolve, reject, requiredRights);
+    
+    if (err || info || !user ) {
+
+      console.log(err, info, user);
       return reject(
         new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized")
       );
@@ -19,13 +24,12 @@ const verifyCallback =
     const { authorization } = req.headers;
   
     let token;
-    let activity;
+    // let activity;
     let decodedData;
     if (authorization && authorization.startsWith("Bearer")) {
       token = authorization.split(" ")[1];
       decodedData = jwt.decode(token);
-      activity = decodedData.activity;
-
+      // activity = decodedData.activity;
     }
 
     if (requiredRights.length) {
@@ -41,9 +45,17 @@ const verifyCallback =
     resolve();
   };
 
+
+
 const auth =
   (...requiredRights) =>
   async (req, res, next) => {
+
+    
+    // console.log("req", req);
+
+    // console.log("req.body", req.body);
+
     return new Promise((resolve, reject) => {
       passport.authenticate(
         "jwt",

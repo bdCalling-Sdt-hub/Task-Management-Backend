@@ -13,6 +13,7 @@ module.exports.submitController = require('./submit.controller');
 
 module.exports.memberController = require('./member.controller');
 module.exports.taskController = require('./task.controller');
+module.exports.analyticsController = require('./analytics.controller');
 
 
 

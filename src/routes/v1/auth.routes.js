@@ -26,10 +26,10 @@ router.post('/delete-me', auth('user'), validate(authValidation.deleteMe), authC
 
 //=============== sub Admins realted routes ===============
 
-router.post('/register', auth('admin'), validate(authValidation.register), authController.register);
+router.post('/sub-admin', auth('admin'), validate(authValidation.register), authController.register);
 router.get('/all-admins', auth('admin'), authController.getAllAdmins)
-router.get('/:id', auth('commonForAdmin'), authController.getAdmin)
 router.patch('/block/:id', auth('admin'), authController.blockUser)
+router.get('/:id', auth('commonForAdmin'), authController.getAdmin)
 router.patch('/update/:id', auth('commonForAdmin'), authController.editUser)
 
 module.exports = router;

@@ -14,6 +14,8 @@ module.exports.taskService = require('./task.service')
 module.exports.submitService = require('./submit.service')
 module.exports.memberService = require('./member.service')
 
+module.exports.analyticsService = require('./analytics.service')
+
 
 
 //============= START IN HERE ============

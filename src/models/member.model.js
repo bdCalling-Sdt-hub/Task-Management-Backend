@@ -74,4 +74,9 @@ const memberSchema = new mongoose.Schema({
 
 const Member = mongoose.model('Member', memberSchema);
 
+memberSchema.statics.isEmailTaken = async function (email, excludeUserId) {
+    const member = await this.findOne({ email, _id: { $ne: excludeUserId } });
+    return !!member;
+  };
+
 module.exports = Member;

@@ -21,6 +21,9 @@ const subTaskSchema = new mongoose.Schema({
     managerId: {
         type: String,
     },
+    taskSubmissionDate: {
+        type: Date
+    },
     title: {
         type: String,
         default: "",
@@ -39,6 +42,10 @@ const subTaskSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    isRead: {
+        type: Boolean,
+        default: false,
+    }
 }, { timestamps: true });
 
 const SubTask = mongoose.model('SubTask', subTaskSchema);

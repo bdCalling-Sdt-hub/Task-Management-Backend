@@ -21,6 +21,9 @@ router.route("/nidVerifyReject").post(auth("common"), userController.nidVerifyRe
 router.route("/nidVerifySubmitList").get(auth("common"), userController.nidVerifySubmitList);
 router.route("/").get(auth("common"), userController.getUsers);
 
+
+
+
 router
   .route("/:userId")
   .get(auth("common"), userController.getUser)

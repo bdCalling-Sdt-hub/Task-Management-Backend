@@ -34,12 +34,14 @@ const getAllTasks = async (page = 1, limit = 10) => {
     }
 };
 
-const createSubTask = async (taskData) => { // Add this function
+const createSubTask = async (taskData) => {
     try {
-        console.log(taskData);
-        // const newTask = new SubTask.find({e});
-        // await newTask.save();
-        // return newTask;
+        console.log("Creating subtask:", taskData);
+        // Create a new subtask instance
+        const newSubTask = new SubTask(taskData);
+        // Save to database
+        await newSubTask.save();
+        return newSubTask;
     } catch (error) {
         throw new ApiError(500, error.message);
     }

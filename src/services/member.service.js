@@ -23,26 +23,26 @@ const createMember = async (data) => {
 
         // Find and validate myDailyTasks
         const dailyTasks = await SubTask.find({ _id: { $in: data.myDailyTasks } });
-        if (data.myDailyTasks.length > 0 && dailyTasks.length === 0) {
-            throw new ApiError(404, "No matching daily tasks found");
-        }
+        // if (data.myDailyTasks.length > 0 && dailyTasks.length === 0) {
+        //     throw new ApiError(404, "No matching daily tasks found");
+        // }
 
         // Find and validate myWeeklyTasks
         const weeklyTasks = await SubTask.find({ _id: { $in: data.myWeeklyTasks } });
-        if (data.myWeeklyTasks.length > 0 && weeklyTasks.length === 0) {
-            throw new ApiError(404, "No matching weekly tasks found");
-        }
+        // if (data.myWeeklyTasks.length > 0 && weeklyTasks.length === 0) {
+        //     throw new ApiError(404, "No matching weekly tasks found");
+        // }
 
         // ✅ Update Daily Subtasks
         await SubTask.updateMany(
             { _id: { $in: data.myDailyTasks } },
-            { $set: { userEmail: data.email, taskType: "Daily" , managerId : data.assignedManager } }
+            { $set: { userEmail: data.email, taskType: "Daily", managerId: data.assignedManager } }
         );
 
         // ✅ Update Weekly Subtasks
         await SubTask.updateMany(
             { _id: { $in: data.myWeeklyTasks } },
-            { $set: { userEmail: data.email, taskType: "Weekly" , managerId : data.assignedManager } }
+            { $set: { userEmail: data.email, taskType: "Weekly", managerId: data.assignedManager } }
         );
 
         // ✅ Fetch only updated Daily Subtasks
@@ -79,6 +79,11 @@ const createMember = async (data) => {
 // Get a single member by ID
 const getSingleMember = async (id) => {
     try {
+        // const decoded = jwtToken.verify(token, jwt.secret);
+        // const id = decoded.sub;
+
+        // console.log("id", id);
+
         const member = await Member.findById(id);
         if (!member) {
             throw new ApiError(404, "Member not found");
@@ -121,8 +126,8 @@ const updateMember = async (id, updateData) => {
 };
 
 
-const login = async (loginData) => {
-    const { email, password } = loginData;
+const login = async (email, password) => {
+
 
     // Check if the member exists
     const member = await Member.findOne({ email });
@@ -133,13 +138,14 @@ const login = async (loginData) => {
     if (member.password !== password) {
         throw new ApiError(401, "Invalid email or password");
     }
-    const token = jwtToken.sign(
-        { userId: member._id, email: member.email },
-        jwt.secret, // Ensure you have a secret key in your .env file
-        { expiresIn: '30d' } // Token expiration time (can adjust as needed)
-    );
 
-    return { token, member };
+    // const token = jwtToken.sign(
+    //     { userId: member._id, email: member.email, type: "access" },
+    //     jwt.secret, // Ensure you have a secret key in your .env file
+    //     { expiresIn: '30d' } // Token expiration time (can adjust as needed),
+    // );
+
+    return member;
 };
 
 
@@ -157,7 +163,7 @@ const updateMembersAsUser = async (id, updateData, file) => {
 
         // Handle file upload (if any)
         if (file) {
-            updateData.profileImage = "uploads/users" + file.filename; // Save the uploaded image path
+            updateData.profileImage = "uploads/members/" + file.filename; // Save the uploaded image path
         }
         // Update the member
         const updatedMember = await Member.findByIdAndUpdate(id, updateData, {
