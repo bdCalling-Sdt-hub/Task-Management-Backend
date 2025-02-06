@@ -204,6 +204,7 @@ const deleteMe = catchAsync(async (req, res) => {
 const getAllAdmins = catchAsync(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
+  
   const result = await authService.getAllAdmins(page, limit);
   res.status(httpStatus.OK).json(
     response({
@@ -260,6 +261,27 @@ const editUser = catchAsync(async (req, res) => {
   );
 })
 
+const getAllBlockAdmins = catchAsync(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const result = await authService.getAllBlockAdmins(page, limit);
+  res.status(httpStatus.OK).json(
+    response({
+      message: "Admins retrieved successfully",
+      status: "OK",
+      statusCode: httpStatus.OK,
+      data: {
+        admins: result.admins,
+        pagination: {
+          totalAdmins: result.totalAdmins,
+          totalPages: result.totalPages,
+          currentPage: result.currentPage,
+        },
+      },
+    })
+  );
+});
+
 
 module.exports = {
   register,
@@ -275,5 +297,6 @@ module.exports = {
   getAllAdmins,
   getAdmin,
   blockUser,
-  editUser
+  editUser,
+  getAllBlockAdmins
 };

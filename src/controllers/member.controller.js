@@ -25,7 +25,7 @@ const getSingleMember = catchAsync(async (req, res) => {
 
     const id = req.user.id;
     // const userId = req.params.id;
-    console.log("request User ==>", req.user);
+    // console.log("request User ==>", req.user);
     // const headers = req.headers;
     // const authHeader = headers?.authorization; // Get Authorization header
 
@@ -126,14 +126,15 @@ const login = async (req, res) => {
 
 
 const updateMembersAsUser = catchAsync(async (req, res) => {
-    const updatedMember = await memberService.updateMembersAsUser(req.params.id, req.body, req.file);
+    const getIdInToken = req.user.id;
+    const updatedMember = await memberService.updateMembersAsUser(getIdInToken, req.body, req.file);
 
     res.status(httpStatus.OK).json(
         response({
             message: "Member updated successfully",
             status: "OK",
             statusCode: httpStatus.OK,
-            data: {}, // Return updated member data
+            data: updatedMember, // Return updated member data
         })
     );
 });

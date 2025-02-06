@@ -19,10 +19,10 @@ router.get('/:id', auth("commonForAdmin"), memberController.getSingleMemberAsAdm
 
 //✅ for customer and manager
 router.get('/customer/profile', chewckAuth('customer'), memberController.getSingleMember);
-router.patch('/update/customer/:id', chewckAuth("customer"), uploadUsers.single('profileImage'), memberController.updateMembersAsUser);
+router.patch('/update/customer', chewckAuth("customer"), uploadUsers.single('profileImage'), memberController.updateMembersAsUser);
 
 router.get('/manager/profile', chewckAuth('manager'), memberController.getSingleMember);
-router.patch('/update/manager/:id', chewckAuth("customer"), uploadUsers.single('profileImage'), memberController.updateMembersAsUser);
+router.patch('/update/manager', chewckAuth("manager"), uploadUsers.single('profileImage'), memberController.updateMembersAsUser);
 
 
 // ✅ Login routes

@@ -28,6 +28,7 @@ router.post('/delete-me', auth('user'), validate(authValidation.deleteMe), authC
 
 router.post('/sub-admin', auth('admin'), validate(authValidation.register), authController.register);
 router.get('/all-admins', auth('admin'), authController.getAllAdmins)
+router.get('/all-block-admins', auth('admin'), authController.getAllBlockAdmins)
 router.patch('/block/:id', auth('admin'), authController.blockUser)
 router.get('/:id', auth('commonForAdmin'), authController.getAdmin)
 router.patch('/update/:id', auth('commonForAdmin'), authController.editUser)

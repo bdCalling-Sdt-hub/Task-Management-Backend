@@ -1,5 +1,5 @@
 const { jwt } = require("../config/config");
-const { Member, SubTask } = require("../models");
+const { Member, SubTask, Task } = require("../models");
 const ApiError = require("../utils/ApiError");
 const jwtToken = require('jsonwebtoken');
 
@@ -50,6 +50,14 @@ const createMember = async (data) => {
 
         // ✅ Fetch only updated Weekly Subtasks
         const updatedWeeklyTasks = await SubTask.find({ _id: { $in: data.myWeeklyTasks } });
+        console.log("mainTaskId", data.mainTaskId);
+        const assigneCustomerTasksLength = await Task.findById({ _id: data.mainTaskId })
+
+        assigneCustomerTasksLength.totalAssignedCustomer = assigneCustomerTasksLength.totalAssignedCustomer + 1;
+
+        await assigneCustomerTasksLength.save();
+
+
 
         // ✅ Create the new member object
         const newMemberData = {
@@ -65,6 +73,7 @@ const createMember = async (data) => {
             weeklyDescription: data.weeklyDescription,
             myDailyTasks: updatedDailyTasks,
             myWeeklyTasks: updatedWeeklyTasks,
+            mainTaskId: data.mainTaskId
         };
 
         // ✅ Save new member to database
@@ -79,12 +88,11 @@ const createMember = async (data) => {
 // Get a single member by ID
 const getSingleMember = async (id) => {
     try {
-        // const decoded = jwtToken.verify(token, jwt.secret);
-        // const id = decoded.sub;
+        // Find member by ID and select only the required fields
+        const member = await Member.findById(id).select(
+            "_id memberName profileImage location isVisible email role assignedManager"
+        );
 
-        // console.log("id", id);
-
-        const member = await Member.findById(id);
         if (!member) {
             throw new ApiError(404, "Member not found");
         }
@@ -94,10 +102,12 @@ const getSingleMember = async (id) => {
     }
 };
 
+
 // Get all members
 const getAllMembers = async () => {
     try {
-        const members = await Member.find();
+        // Fetch members while excluding `myDailyTasks` and `myWeeklyTasks`
+        const members = await Member.find({}, { myDailyTasks: 0, myWeeklyTasks: 0 });
         return members;
     } catch (error) {
         throw new ApiError(500, error.message);

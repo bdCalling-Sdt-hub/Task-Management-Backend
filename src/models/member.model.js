@@ -7,7 +7,7 @@ const memberSchema = new mongoose.Schema({
     },
     profileImage: {
         type: String,
-        default: 'https://res.cloudinary.com/nerob/image/upload/v1736698546/ForBdcolling/uuovt73ylqcnaizimunk.png'
+        default: 'uploads/members/user.png'
     },
     location: {
         type: String,
@@ -16,7 +16,11 @@ const memberSchema = new mongoose.Schema({
     isVisible: {
         type: Boolean,
         default: true
-    }, // For profile visibility
+    }, // For profile visibility]
+    isViewed: {
+        type: Boolean,
+        default: false
+    },
     email: {
         type: String,
         required: true,
@@ -50,6 +54,10 @@ const memberSchema = new mongoose.Schema({
         ref: 'SubTask',
         default: []
     },
+    mainTaskId: {
+        type: String,
+        default: "",
+    },
     dailyTitle: {
         type: String,
         default: ""
@@ -77,6 +85,6 @@ const Member = mongoose.model('Member', memberSchema);
 memberSchema.statics.isEmailTaken = async function (email, excludeUserId) {
     const member = await this.findOne({ email, _id: { $ne: excludeUserId } });
     return !!member;
-  };
+};
 
 module.exports = Member;

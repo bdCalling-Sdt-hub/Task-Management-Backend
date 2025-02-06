@@ -5,6 +5,8 @@ const Token = require("../models/token.model");
 const ApiError = require("../utils/ApiError");
 const { tokenTypes } = require("../config/tokens");
 const User = require("../models/user.model");
+const { password } = require("../validations/custom.validation");
+const { decode } = require("jsonwebtoken");
 
 
 const loginUserWithEmailAndPassword = async (email, password) => {
@@ -153,7 +155,7 @@ const getAllAdmins = async (page = 1, limit = 10, role = "admin") => {
     const skip = (page - 1) * limit;
 
     // Filter only admins
-    const admins = await User.find({ role: "subAdmin" }).skip(skip).limit(limit);
+    const admins = await User.find({ role: "subAdmin" , isBlocked: false }).skip(skip).limit(limit);
 
     // Count only admin users
     const totalAdmins = await User.countDocuments({ role: "subAdmin" });
@@ -197,9 +199,31 @@ const editUser = async (id, reqBody) => {
   user.phoneNumber = reqBody.phoneNumber;
   user.role = reqBody.role;
   user.message = reqBody.message;
+  user.password = decodeURIComponent(reqBody.password);
   await user.save();
   return user;
 }
+
+const getAllBlockAdmins = async (page = 1, limit = 10) => {
+  try {
+    const skip = (page - 1) * limit;
+
+    // Filter only admins
+    const admins = await User.find({ isBlocked: true , role: "subAdmin" }).skip(skip).limit(limit);
+
+    // Count only admin users
+    const totalAdmins = await User.countDocuments({ isBlocked: true });
+
+    return {
+      admins,
+      totalAdmins,
+      totalPages: Math.ceil(totalAdmins / limit),
+      currentPage: page,
+    };
+  } catch (error) {
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
+  }
+};
 
 
 module.exports = {
@@ -214,5 +238,6 @@ module.exports = {
   getAllAdmins,
   getAdmin,
   blockUser,
+  getAllBlockAdmins,
   editUser
 };

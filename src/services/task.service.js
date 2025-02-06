@@ -1,4 +1,4 @@
-const { SubTask } = require('../models');
+const { SubTask, Member } = require('../models');
 const mongoose = require('mongoose');
 const Task = require('../models/task.model');
 const ApiError = require('../utils/ApiError');
@@ -22,6 +22,9 @@ const getAllTasks = async (page = 1, limit = 10) => {
 
         const totalTasks = await Task.countDocuments(); // Get the total number of tasks
         const totalPages = Math.ceil(totalTasks / limit); // Calculate the total number of pages
+
+        console.log("tasks:", tasks);
+
 
         return {
             tasks,
@@ -69,7 +72,9 @@ const getSingleSubTask = async (email) => {
             throw new ApiError(400, "Email is required");
         }
 
-        const task = await SubTask.find({ userEmail: email.toLowerCase() }); // Convert to lowercase
+        const task = await SubTask.find({ userEmail: email, taskType: "Weekly" }); // Convert to lowercase
+
+        console.log("task", task);
 
         if (!task.length) {
             throw new ApiError(404, "No tasks found for this email");
@@ -81,6 +86,26 @@ const getSingleSubTask = async (email) => {
     }
 };
 
+
+const getSingleDailySubTask = async (email) => {
+    try {
+        if (!email) {
+            throw new ApiError(400, "Email is required");
+        }
+
+        const task = await SubTask.find({ userEmail: email.toLowerCase(), taskType: "Daily" }); // Convert to lowercase
+
+
+
+        if (!task.length) {
+            throw new ApiError(404, "No tasks found for this email");
+        }
+
+        return task; // ✅ Fix: Return the task list
+    } catch (error) {
+        throw new ApiError(500, error.message);
+    }
+}
 
 const updateManySubTasks = async (tasks) => {
     try {
@@ -160,6 +185,91 @@ const getAllTaskRequestToManager = async () => {
     }
 };
 
+const getAllTaskSubmitedToManager = async (id) => {
+    try {
+        const task = await Member.find({ assignedManager: id }).select(
+            "_id memberName profileImage location isVisible isViewed email role assignedManager "
+        );
+        if (!task) {
+            throw new ApiError(404, "Task not found");
+        }
+        return task;
+    } catch (error) {
+        throw new ApiError(500, error.message);
+    }
+};
+
+const getAllTaskViewedToManager = async (customerId) => {
+    try {
+        // Update all tasks assigned to the manager, setting isViewed to true
+        const updatedTasks = await Member.updateMany(
+            { _id: customerId, isViewed: false }, // Find tasks that haven't been viewed
+            { $set: { isViewed: true } }, // Update isViewed field to true
+            { new: true } // Return updated documents
+        );
+
+        if (!updatedTasks) {
+            throw new ApiError(404, "Viewed Member not found for this manager");
+        }
+
+        return updatedTasks;
+    } catch (error) {
+        throw new ApiError(500, error.message);
+    }
+};
+
+
+const getAllTaskSearchToManager = async (customerEmail, date, searchType = 'day') => {
+    try {
+        if (!customerEmail || !date) {
+            throw new ApiError(400, "Customer email and date are required");
+        }
+
+        // Convert provided date string (YYYY-MM-DD) to a valid Date object
+        const queryDate = new Date(date);
+        if (isNaN(queryDate)) {
+            throw new ApiError(400, "Invalid date format. Use 'YYYY-MM-DD'.");
+        }
+
+        let startDate, endDate;
+
+        if (searchType === 'day') {
+            // Define start and end of the selected date
+            startDate = new Date(queryDate);
+            startDate.setHours(0, 0, 0, 0); // Start of the day
+
+            endDate = new Date(queryDate);
+            endDate.setHours(23, 59, 59, 999); // End of the day
+        } else if (searchType === 'week') {
+            // Calculate the start of the week (Sunday)
+            startDate = new Date(queryDate);
+            startDate.setDate(queryDate.getDate() - queryDate.getDay()); // Start of the week (Sunday)
+            startDate.setHours(0, 0, 0, 0);
+
+            // Calculate the end of the week (Saturday)
+            endDate = new Date(queryDate);
+            endDate.setDate(queryDate.getDate() + (7 - queryDate.getDay())); // End of the week (Saturday)
+            endDate.setHours(23, 59, 59, 999);
+        } else {
+            throw new ApiError(400, "Invalid search type. Use 'day' or 'week'.");
+        }
+
+        // Query tasks within the date range
+        const tasks = await SubTask.find({
+            userEmail: customerEmail,
+            taskSubmissionDate: { $gte: startDate, $lte: endDate }
+        }).lean();
+
+        if (!tasks.length) {
+            throw new ApiError(404, `No tasks found for this customer on the given ${searchType}.`);
+        }
+
+        return tasks;
+    } catch (error) {
+        throw new ApiError(error.statusCode || 500, error.message || "Internal Server Error");
+    }
+};
+
 
 module.exports = {
     createTask,
@@ -170,5 +280,9 @@ module.exports = {
     updateManySubTasks,
     getAllSubTask,
     updateManyTask,
-    getAllTaskRequestToManager
+    getAllTaskRequestToManager,
+    getAllTaskSubmitedToManager,
+    getAllTaskViewedToManager,
+    getAllTaskSearchToManager,
+    getSingleDailySubTask
 };

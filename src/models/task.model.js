@@ -10,7 +10,7 @@ const taskSchema = new mongoose.Schema({
         type: String,
         // required: true,
     },
-    
+
     taskClassName: {
         type: String,
         required: true,
@@ -22,6 +22,10 @@ const taskSchema = new mongoose.Schema({
     taskDescription: {
         type: String,
         required: true,
+    },
+    totalAssignedCustomer: {
+        type: Number,
+        default: 0
     },
     subTasks: [{
         type: String,
