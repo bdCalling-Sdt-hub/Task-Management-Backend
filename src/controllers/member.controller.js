@@ -139,6 +139,18 @@ const updateMembersAsUser = catchAsync(async (req, res) => {
     );
 });
 
+const getAllManager = catchAsync(async (req, res) => {
+    const members = await memberService.getAllManager();
+    res.status(httpStatus.OK).json(
+        response({
+            message: "Members retrieved successfully",
+            status: "OK",
+            statusCode: httpStatus.OK,
+            data: members,
+        })
+    );
+});
+
 
 module.exports = {
     createMember,
@@ -147,5 +159,6 @@ module.exports = {
     updateMember,
     login,
     getSingleMemberAsAdmin,
-    updateMembersAsUser
+    updateMembersAsUser,
+    getAllManager
 };

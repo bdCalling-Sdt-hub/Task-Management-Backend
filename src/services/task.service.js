@@ -1,7 +1,8 @@
-const { SubTask, Member } = require('../models');
+const { SubTask, Member, User } = require('../models');
 const mongoose = require('mongoose');
 const Task = require('../models/task.model');
 const ApiError = require('../utils/ApiError');
+const submitedTask = require('../models/submitedTask');
 
 const createTask = async (taskData) => {
     try {
@@ -23,7 +24,6 @@ const getAllTasks = async (page = 1, limit = 10) => {
         const totalTasks = await Task.countDocuments(); // Get the total number of tasks
         const totalPages = Math.ceil(totalTasks / limit); // Calculate the total number of pages
 
-        console.log("tasks:", tasks);
 
 
         return {
@@ -36,6 +36,30 @@ const getAllTasks = async (page = 1, limit = 10) => {
         throw new ApiError(500, error.message);
     }
 };
+
+const getSingleSubTaskById = async (id) => {
+    try {
+        const task = await SubTask.findById(id);
+        if (!task) {
+            throw new ApiError(404, "Task not found");
+        }
+        return task;
+    } catch (error) {
+        throw new ApiError(500, error.message);
+    }
+}
+
+const deleteSingleSubTaskById = async (id) => {
+    try {
+        const task = await SubTask.findByIdAndDelete(id);
+        if (!task) {
+            throw new ApiError(404, "Task not found");
+        }
+        return task;
+    } catch (error) {
+        throw new ApiError(500, error.message);
+    }
+}
 
 const createSubTask = async (taskData) => {
     try {
@@ -173,6 +197,51 @@ const updateManyTask = async (tasks) => {
 };
 
 
+const postTaskToManager = async (taskData, userID) => {
+    try {
+        // Find user and managerId
+        const user = await Member.findById(userID);
+        if (!user) throw new ApiError(404, "User not found");
+
+        const managerId = user.assignedManager ? user.assignedManager.toString() : null;
+        if (!managerId) throw new ApiError(400, "Assigned manager not found");
+
+        // Ensure taskData is an array
+        if (!Array.isArray(taskData) || taskData.length === 0) {
+            throw new ApiError(400, "Invalid or empty taskData");
+        }
+
+        // Extract task IDs for updateMany
+        const taskIds = taskData.map(task => task.taskId);
+
+        // Update existing tasks: Set `resiveAdmin: true`
+        const updateSubTask = await SubTask.updateMany(
+            { _id: { $in: taskIds } },
+            { $set: { isCompleted: true, updatedAt: new Date() } }
+        );
+
+        if (updateSubTask.modifiedCount === 0) {
+            throw new ApiError(404, "No tasks were updated, possibly not found");
+        }
+
+        // Prepare new task data for insertion
+        const modifiedTaskData = taskData.map(task => ({
+            ...task,
+            userId: userID,
+            managerId: managerId,
+            submitedDate: new Date(),
+        }));
+
+        // Insert modified data into `submitedTask`
+        const createMany = await submitedTask.insertMany(modifiedTaskData);
+
+        return createMany;
+    } catch (error) {
+        console.error("Error in postTaskToManager:", error.message);
+        throw new ApiError(500, error.message);
+    }
+}
+
 const getAllTaskRequestToManager = async () => {
     try {
         const task = await SubTask.find({ resiveAdmin: true });
@@ -284,5 +353,8 @@ module.exports = {
     getAllTaskSubmitedToManager,
     getAllTaskViewedToManager,
     getAllTaskSearchToManager,
-    getSingleDailySubTask
+    getSingleDailySubTask,
+    postTaskToManager,
+    getSingleSubTaskById,
+    deleteSingleSubTaskById
 };

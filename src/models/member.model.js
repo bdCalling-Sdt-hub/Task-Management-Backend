@@ -39,6 +39,10 @@ const memberSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId, // ✅ Changed to ObjectId
         ref: 'Manager', // Assuming you have a Manager model
     },
+    assignedManagerName: {
+        type: String,
+        default: ""
+    },
     myTasks: {
         type: [], // Store task IDs
         ref: 'Task',

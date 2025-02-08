@@ -5,78 +5,80 @@ const jwtToken = require('jsonwebtoken');
 
 const createMember = async (data) => {
     try {
-        // Check if the member already exists
+        // 1️⃣ Check if the member already exists
         const memberExist = await Member.findOne({ email: data.email });
         if (memberExist) {
             throw new ApiError(400, "This email already exists");
         }
 
-        // Validate password length
-        if (data.password.length < 6) {
-            throw new ApiError(400, "Password must be at least 6 characters");
-        }
-
-        // Validate required fields
+        // 2️⃣ Validate required fields
         if (!data.memberName || !data.email || !data.location || !data.password || !data.role) {
             throw new ApiError(400, "All fields are required");
         }
 
-        // Find and validate myDailyTasks
-        const dailyTasks = await SubTask.find({ _id: { $in: data.myDailyTasks } });
-        // if (data.myDailyTasks.length > 0 && dailyTasks.length === 0) {
-        //     throw new ApiError(404, "No matching daily tasks found");
-        // }
-
-        // Find and validate myWeeklyTasks
-        const weeklyTasks = await SubTask.find({ _id: { $in: data.myWeeklyTasks } });
-        // if (data.myWeeklyTasks.length > 0 && weeklyTasks.length === 0) {
-        //     throw new ApiError(404, "No matching weekly tasks found");
-        // }
-
-        // ✅ Update Daily Subtasks
-        await SubTask.updateMany(
-            { _id: { $in: data.myDailyTasks } },
-            { $set: { userEmail: data.email, taskType: "Daily", managerId: data.assignedManager } }
-        );
-
-        // ✅ Update Weekly Subtasks
-        await SubTask.updateMany(
-            { _id: { $in: data.myWeeklyTasks } },
-            { $set: { userEmail: data.email, taskType: "Weekly", managerId: data.assignedManager } }
-        );
-
-        // ✅ Fetch only updated Daily Subtasks
-        const updatedDailyTasks = await SubTask.find({ _id: { $in: data.myDailyTasks } });
-
-        // ✅ Fetch only updated Weekly Subtasks
-        const updatedWeeklyTasks = await SubTask.find({ _id: { $in: data.myWeeklyTasks } });
-        console.log("mainTaskId", data.mainTaskId);
-        const assigneCustomerTasksLength = await Task.findById({ _id: data.mainTaskId })
-
-        assigneCustomerTasksLength.totalAssignedCustomer = assigneCustomerTasksLength.totalAssignedCustomer + 1;
-
-        await assigneCustomerTasksLength.save();
+        // 3️⃣ Validate password length & Hash Password
+        if (data.password.length < 6) {
+            throw new ApiError(400, "Password must be at least 6 characters");
+        }
 
 
+        // 4️⃣ Fetch & Validate Tasks
+        const dailyTaskIds = Array.isArray(data.myDailyTasks) ? data.myDailyTasks : [];
+        const weeklyTaskIds = Array.isArray(data.myWeeklyTasks) ? data.myWeeklyTasks : [];
+        const dailyTasks = await SubTask.find({ _id: { $in: dailyTaskIds } });
+        const weeklyTasks = await SubTask.find({ _id: { $in: weeklyTaskIds } });
 
-        // ✅ Create the new member object
+        // 5️⃣ Update Daily & Weekly Subtasks
+        if (dailyTaskIds.length > 0) {
+            await SubTask.updateMany(
+                { _id: { $in: dailyTaskIds } },
+                { $set: { userEmail: data.email, taskType: "Daily", managerId: data.assignedManager } }
+            );
+        }
+        if (weeklyTaskIds.length > 0) {
+            await SubTask.updateMany(
+                { _id: { $in: weeklyTaskIds } },
+                { $set: { userEmail: data.email, taskType: "Weekly", managerId: data.assignedManager } }
+            );
+        }
+
+        // 6️⃣ Update `totalAssignedCustomer` in Task
+        if (data.mainTaskId) {
+            const task = await Task.findById(data.mainTaskId);
+            if (task) {
+                task.totalAssignedCustomer = (task.totalAssignedCustomer || 0) + 1;
+                await task.save();
+            }
+        }
+
+        // 7️⃣ Get Assigned Manager Name (if exists)
+        let assignedManagerName = "";
+        if (data.assignedManager) {
+            const manager = await Member.findById(data.assignedManager);
+            if (manager) {
+                assignedManagerName = manager.memberName;
+            }
+        }
+
+        // 8️⃣ Create the new Member
         const newMemberData = {
             memberName: data.memberName,
             location: data.location,
             email: data.email,
-            password: data.password,
+            password: data.password, // Store hashed password
             role: data.role,
             assignedManager: data.assignedManager,
             dailyTitle: data.dailyTitle,
             dailyDescription: data.dailyDescription,
             weeklyTitle: data.weeklyTitle,
             weeklyDescription: data.weeklyDescription,
-            myDailyTasks: updatedDailyTasks,
-            myWeeklyTasks: updatedWeeklyTasks,
-            mainTaskId: data.mainTaskId
+            myDailyTasks: dailyTasks.map(task => task._id),
+            myWeeklyTasks: weeklyTasks.map(task => task._id),
+            mainTaskId: data.mainTaskId,
+            assignedManagerName: assignedManagerName || ""
         };
 
-        // ✅ Save new member to database
+
         const newMember = await Member.create(newMemberData);
 
         return newMember;
@@ -84,6 +86,8 @@ const createMember = async (data) => {
         throw new ApiError(500, error.message);
     }
 };
+
+
 
 // Get a single member by ID
 const getSingleMember = async (id) => {
@@ -106,8 +110,11 @@ const getSingleMember = async (id) => {
 // Get all members
 const getAllMembers = async () => {
     try {
+
         // Fetch members while excluding `myDailyTasks` and `myWeeklyTasks`
         const members = await Member.find({}, { myDailyTasks: 0, myWeeklyTasks: 0 });
+
+
         return members;
     } catch (error) {
         throw new ApiError(500, error.message);
@@ -191,11 +198,21 @@ const updateMembersAsUser = async (id, updateData, file) => {
 };
 
 
+const getAllManager = async () => {
+    try {
+        const members = await Member.find({ role: "manager" });
+        return members;
+    } catch (error) {
+        throw new ApiError(500, error.message);
+    }
+};
+
 module.exports = {
     createMember,
     getSingleMember,
     getAllMembers,
     updateMember,
     login,
-    updateMembersAsUser
+    updateMembersAsUser,
+    getAllManager
 };

@@ -27,6 +27,7 @@ const createTask = async (req, res) => {
     }
 };
 
+
 const createSubTask = async (req, res) => {
     try {
         const taskData = req.body;
@@ -84,6 +85,51 @@ const getAllTasks = async (req, res) => {
         );
     }
 };
+
+const getSingleSubTaskById = async (req, res) => {
+    try {
+        const task = await taskService.getSingleSubTaskById(req.params.id);  // Pass userID
+        res.status(httpStatus.OK).json(
+            response({
+                message: 'Task retrieved successfully',
+                status: 'OK',
+                statusCode: httpStatus.OK,
+                data: task,
+            })
+        );
+    } catch (error) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json(
+            response({
+                message: error.message,
+                status: 'ERROR',
+                statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+            })
+        );
+    }
+};
+
+const deleteSingleSubTaskById = async (req, res) => {
+    try {
+        const task = await taskService.deleteSingleSubTaskById(req.params.id);  // Pass userID
+        res.status(httpStatus.OK).json(
+            response({
+                message: 'Task deleted successfully',
+                status: 'OK',
+                statusCode: httpStatus.OK,
+                data: task,
+            })
+        );
+    } catch (error) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json(
+            response({
+                message: error.message,
+                status: 'ERROR',
+                statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+            })
+        );
+    }
+};
+
 
 const getSingleTask = async (req, res) => {
     try {
@@ -199,6 +245,31 @@ const updateManySubTasks = async (req, res) => {
 };
 
 
+const postTaskToManager = async (req, res) => {
+    try {
+        const { id } = req.user;
+
+        const task = await taskService.postTaskToManager(req.body, id);  // Pass userID
+        res.status(httpStatus.CREATED).json(
+            response({
+                message: 'Task Submit successfully !!',
+                status: 'OK',
+                statusCode: httpStatus.CREATED,
+                data: task,
+            })
+        );
+    } catch (error) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json(
+            response({
+                message: error.message,
+                status: 'ERROR',
+                statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+            })
+        );
+    }
+}
+
+
 const getAllTaskRequestToManager = async (req, res) => {
     try {
         const tasks = await taskService.getAllTaskRequestToManager();  // Pass userID
@@ -247,7 +318,9 @@ const getAllSubTask = async (req, res) => {
 
 const updateManyTask = async (req, res) => {
     try {
-        const updatedTasks = await taskService.updateManyTask(req.body);
+        const { id } = req.user;
+
+        const updatedTasks = await taskService.updateManyTask(req.body, id);
 
         res.status(httpStatus.OK).json(
             response({
@@ -328,5 +401,8 @@ module.exports = {
     getAllTaskSubmitedToManager,
     getAllTaskViewedToManager,
     getAllTaskSearchToManager,
-    getSingleDailySubTask
+    getSingleDailySubTask,
+    postTaskToManager,
+    deleteSingleSubTaskById,
+    getSingleSubTaskById
 };

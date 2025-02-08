@@ -5,6 +5,8 @@ const chewckAuth = require('../../middlewares/memberAuth');
 const router = express.Router();
 
 router.post('/create-task', auth("commonForAdmin"), taskController.createTask);
+router.get('/single-task/:id', auth("commonForAdmin"), taskController.getSingleSubTaskById);
+router.delete('/single-task/:id', auth("commonForAdmin"), taskController.deleteSingleSubTaskById);
 router.get('/my-task/:userID', auth("commonForAdmin"), taskController.getSingleTask);
 router.get('/all', auth("commonForAdmin"), taskController.getAllTasks);
 
@@ -17,7 +19,8 @@ router.get('/all/sub-task/:id', auth("common"), taskController.getAllSubTask);
 router.post('/sub-task', auth("common"), taskController.createSubTask);
 
 // router.patch('/sub-task/:id', auth("commonForAdmin"), taskController.updateSubTask);
-router.patch('/sub-task-to-manager', chewckAuth("customer"), taskController.updateManyTask);
+router.post('/sub-task-to-manager', chewckAuth("customer"), taskController.postTaskToManager);
+
 router.get('/all/sub-task/manager/:id', chewckAuth("manager"), taskController.getAllSubTask);
 
 
