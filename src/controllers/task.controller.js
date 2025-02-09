@@ -13,7 +13,54 @@ const createTask = async (req, res) => {
                 message: 'Task created successfully',
                 status: 'OK',
                 statusCode: httpStatus.CREATED,
-                data: {},
+                data: newTask,
+            })
+        );
+    } catch (error) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json(
+            response({
+                message: error.message,
+                status: 'ERROR',
+                statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+            })
+        );
+    }
+};
+
+const updateTaskAdmin = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const taskData = req.body;
+
+        const updatedTask = await taskService.updateTaskAdmin(id, taskData);
+        res.status(httpStatus.OK).json(
+            response({
+                message: 'Task updated successfully',
+                status: 'OK',
+                statusCode: httpStatus.OK,
+                data: updatedTask,
+            })
+        );
+    } catch (error) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json(
+            response({
+                message: error.message,
+                status: 'ERROR',
+                statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+            })
+        );
+    }
+};
+
+const getSingleTaskById = async (req, res) => {
+    try {
+        const task = await taskService.getSingleTaskById(req.params.id);  // Pass userID
+        res.status(httpStatus.OK).json(
+            response({
+                message: 'Task retrieved successfully',
+                status: 'OK',
+                statusCode: httpStatus.OK,
+                data: task,
             })
         );
     } catch (error) {
@@ -297,6 +344,8 @@ const getAllTaskRequestToManager = async (req, res) => {
 const getAllSubTask = async (req, res) => {
     try {
         const tasks = await taskService.getAllSubTask(req.params.id);  // Pass userID
+        console.log(tasks);
+
         res.status(httpStatus.OK).json(
             response({
                 message: 'Tasks retrieved successfully',
@@ -342,7 +391,8 @@ const updateManyTask = async (req, res) => {
 };
 
 const getAllTaskSubmitedToManager = catchAsync(async (req, res) => {
-    const tasks = await taskService.getAllTaskSubmitedToManager(req.params.id);
+    const { id } = req.user;
+    const tasks = await taskService.getAllTaskSubmitedToManager(id);
     res.status(httpStatus.OK).json(
         response({
             message: 'Tasks retrieved successfully',
@@ -367,15 +417,13 @@ const getAllTaskViewedToManager = catchAsync(async (req, res) => {
 });
 
 const getAllTaskSearchToManager = catchAsync(async (req, res) => {
-    const { email } = req.params;
+    const { userId } = req.params;
     const { date, searchType = 'day' } = req.query; // Default searchType is 'day'
 
-    if (!email || !date) {
-        throw new ApiError(400, "Email and date are required");
-    }
+
 
     // Call the service to get tasks
-    const tasks = await taskService.getAllTaskSearchToManager(email, date, searchType);
+    const tasks = await taskService.getAllTaskSearchToManager(userId, date, searchType);
 
     res.status(httpStatus.OK).json(
         response({
@@ -404,5 +452,7 @@ module.exports = {
     getSingleDailySubTask,
     postTaskToManager,
     deleteSingleSubTaskById,
-    getSingleSubTaskById
+    getSingleSubTaskById,
+    getSingleTaskById,
+    updateTaskAdmin
 };

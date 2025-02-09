@@ -155,7 +155,7 @@ const getAllAdmins = async (page = 1, limit = 10, role = "admin") => {
     const skip = (page - 1) * limit;
 
     // Filter only admins
-    const admins = await User.find({ role: "subAdmin" , isBlocked: false }).skip(skip).limit(limit);
+    const admins = await User.find({ role: "subAdmin", isBlocked: false }).skip(skip).limit(limit);
 
     // Count only admin users
     const totalAdmins = await User.countDocuments({ role: "subAdmin" });
@@ -209,7 +209,7 @@ const getAllBlockAdmins = async (page = 1, limit = 10) => {
     const skip = (page - 1) * limit;
 
     // Filter only admins
-    const admins = await User.find({ isBlocked: true , role: "subAdmin" }).skip(skip).limit(limit);
+    const admins = await User.find({ isBlocked: true, role: "subAdmin" }).skip(skip).limit(limit);
 
     // Count only admin users
     const totalAdmins = await User.countDocuments({ isBlocked: true });

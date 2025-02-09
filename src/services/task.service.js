@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const Task = require('../models/task.model');
 const ApiError = require('../utils/ApiError');
 const submitedTask = require('../models/submitedTask');
+const cron = require("node-cron");
+
 
 const createTask = async (taskData) => {
     try {
@@ -13,6 +15,20 @@ const createTask = async (taskData) => {
         throw new ApiError(500, error.message);
     }
 };
+
+const updateTaskAdmin = async (id, taskData) => {
+    try {
+
+        const updatedTask = await Task.findByIdAndUpdate(id, taskData, { new: true });
+
+        if (!updatedTask) {
+            throw new ApiError(404, "Task not found");
+        }
+        return updatedTask;
+    } catch (error) {
+        throw new ApiError(500, error.message);
+    }
+}
 
 const getAllTasks = async (page = 1, limit = 10) => {
     try {
@@ -36,6 +52,33 @@ const getAllTasks = async (page = 1, limit = 10) => {
         throw new ApiError(500, error.message);
     }
 };
+
+const getSingleTaskById = async (id) => {
+    try {
+        // 1️⃣ Fetch Task
+        const task = await Task.findById(id).lean();
+        if (!task) {
+            throw new ApiError(404, "Task not found");
+        }
+
+        let subTasksData = [];
+        if (Array.isArray(task.subTasks) && task.subTasks.length > 0) {
+            subTasksData = await SubTask.find({ _id: { $in: task.subTasks } }).lean();
+        }
+
+        console.log("subTasksData", subTasksData);
+
+        // 3️⃣ Return Task with Populated SubTasks
+        return {
+            ...task,      // Spread task data
+            subTasks: subTasksData  // Replace IDs with full subtask data
+        };
+    } catch (error) {
+        throw new ApiError(500, error.message);
+    }
+};
+
+
 
 const getSingleSubTaskById = async (id) => {
     try {
@@ -162,8 +205,11 @@ const updateManySubTasks = async (tasks) => {
 
 const getAllSubTask = async (id) => { // Add this function
     try {
-        const task = await SubTask.find({ managerId: id });
-        const totalTasks = task.filter((task) => task.isCompleted === true && !task.resiveAdmin === true);
+        const task = await submitedTask.find({ managerId: id });
+
+        console.log("task", task);
+
+        const totalTasks = task.filter((task) => task.status === "pending");
 
         if (!task) {
             throw new ApiError(404, "Task not found");
@@ -189,8 +235,9 @@ const updateManyTask = async (tasks) => {
         }));
 
         // Execute bulk update
-        const result = await SubTask.bulkWrite(bulkOperations);
+        const result = await submitedTask.bulkWrite(bulkOperations);
         return result;
+
     } catch (error) {
         throw new ApiError(500, error.message);
     }
@@ -288,9 +335,9 @@ const getAllTaskViewedToManager = async (customerId) => {
 };
 
 
-const getAllTaskSearchToManager = async (customerEmail, date, searchType = 'day') => {
+const getAllTaskSearchToManager = async (userId, date, searchType) => {
     try {
-        if (!customerEmail || !date) {
+        if (!userId || !date) {
             throw new ApiError(400, "Customer email and date are required");
         }
 
@@ -324,9 +371,8 @@ const getAllTaskSearchToManager = async (customerEmail, date, searchType = 'day'
         }
 
         // Query tasks within the date range
-        const tasks = await SubTask.find({
-            userEmail: customerEmail,
-            taskSubmissionDate: { $gte: startDate, $lte: endDate }
+        const tasks = await submitedTask.find({
+            userId: userId
         }).lean();
 
         if (!tasks.length) {
@@ -338,6 +384,22 @@ const getAllTaskSearchToManager = async (customerEmail, date, searchType = 'day'
         throw new ApiError(error.statusCode || 500, error.message || "Internal Server Error");
     }
 };
+
+
+cron.schedule("0 0 * * *", async () => {
+    try {
+        await SubTask.updateMany(
+            { isCompleted: true },
+            { $set: { isCompleted: false } }
+        );
+        console.log("Tasks reset successfully!");
+    } catch (error) {
+        console.error("Error updating tasks:", error);
+    }
+});
+
+
+
 
 
 module.exports = {
@@ -356,5 +418,7 @@ module.exports = {
     getSingleDailySubTask,
     postTaskToManager,
     getSingleSubTaskById,
-    deleteSingleSubTaskById
+    deleteSingleSubTaskById,
+    getSingleTaskById,
+    updateTaskAdmin
 };

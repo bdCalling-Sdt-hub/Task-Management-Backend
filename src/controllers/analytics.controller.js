@@ -2,8 +2,8 @@ const { analyticsService } = require("../services");
 const catchAsync = require("../utils/catchAsync");
 
 const getTasksAnalyticsWeeklyAndMonthly = catchAsync(async (req, res) => {
-    
-    const email = req.params.email;
+
+    const email = req.user.email;
     const week = req.query.week ? parseInt(req.query.week) : 1; // Default to Week 1
 
     if (!email) {
