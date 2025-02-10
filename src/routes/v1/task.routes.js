@@ -31,15 +31,16 @@ router.get('/all/sub-task/manager/:id', chewckAuth("manager"), taskController.ge
 router.patch('/update-task', auth("common"), taskController.updateManyTask);
 
 
-
 // admin routes
 router.get('/task-request-manager', auth("commonForAdmin"), taskController.getAllTaskRequestToManager);
 
 
 router.get('/task-submited-customer', chewckAuth("manager"), taskController.getAllTaskSubmitedToManager);
 router.patch('/customer-viewed/:id', chewckAuth("manager"), taskController.getAllTaskViewedToManager);
-router.patch('/manager/update-task', chewckAuth("manager"), taskController.updateManyTask);
+router.patch('/manager/update-task', chewckAuth("manager"), taskController.updateManyTaskSubmited);
 router.get('/customer-task-search/:userId', chewckAuth("manager"), taskController.getAllTaskSearchToManager);
 
 
 module.exports = router;
+
+

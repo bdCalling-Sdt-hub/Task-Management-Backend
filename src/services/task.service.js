@@ -226,22 +226,69 @@ const updateManyTask = async (tasks) => {
             throw new ApiError(400, "Invalid task data");
         }
 
+        // Validate ObjectIDs
+        const invalidIds = tasks.filter(task => !mongoose.Types.ObjectId.isValid(task.taskId));
+        if (invalidIds.length > 0) {
+            throw new ApiError(400, "Invalid Task IDs");
+        }
+
+
+        console.log("tasks", tasks);
+
         // Prepare bulk operations
         const bulkOperations = tasks.map(task => ({
             updateOne: {
-                filter: { _id: task._id }, // Match by ID
-                update: { $set: task }     // Update fields dynamically
+                filter: { _id: new mongoose.Types.ObjectId(task.taskId) }, // Ensure proper ObjectId conversion
+                update: {
+                    $set: { resiveAdmin: task.resiveAdmin ?? true } // Set dynamically or default to true
+                }
             }
         }));
 
         // Execute bulk update
         const result = await submitedTask.bulkWrite(bulkOperations);
-        return result;
 
+        return result;
     } catch (error) {
         throw new ApiError(500, error.message);
     }
 };
+
+const updateManyTaskSubmited = async (tasks) => {
+    try {
+        if (!Array.isArray(tasks) || tasks.length === 0) {
+            throw new ApiError(400, "Invalid task data");
+        }
+
+        // Validate ObjectIDs
+        const invalidIds = tasks.filter(task => !mongoose.Types.ObjectId.isValid(task.taskId));
+        if (invalidIds.length > 0) {
+            throw new ApiError(400, "Invalid Task IDs");
+        }
+
+        // Prepare bulk operations
+        const bulkOperations = tasks.map(task => ({
+            updateOne: {
+                filter: { _id: new mongoose.Types.ObjectId(task.taskId) }, // Ensure proper ObjectId conversion
+                update: {
+                    $set: {
+                        resiveAdmin: true, // Set dynamically or default to true
+                    }
+                }
+            }
+        }));
+
+        console.log("bulkOperations", bulkOperations);
+
+        // Execute bulk update
+        const result = await submitedTask.bulkWrite(bulkOperations);
+        return result;
+    } catch (error) {
+        throw new ApiError(500, error.message);
+    }
+};
+
+
 
 
 const postTaskToManager = async (taskData, userID) => {
@@ -277,6 +324,7 @@ const postTaskToManager = async (taskData, userID) => {
             userId: userID,
             managerId: managerId,
             submitedDate: new Date(),
+            resiveAdmin: false
         }));
 
         // Insert modified data into `submitedTask`
@@ -420,5 +468,6 @@ module.exports = {
     getSingleSubTaskById,
     deleteSingleSubTaskById,
     getSingleTaskById,
-    updateTaskAdmin
+    updateTaskAdmin,
+    updateManyTaskSubmited
 };

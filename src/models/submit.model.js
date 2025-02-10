@@ -30,6 +30,10 @@ const taskSubmissionSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
+        resiveAdmin: {
+            type: Boolean,
+            default: false,
+        },
     },
     { timestamps: true }
 );

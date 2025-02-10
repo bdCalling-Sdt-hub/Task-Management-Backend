@@ -367,10 +367,10 @@ const getAllSubTask = async (req, res) => {
 
 const updateManyTask = async (req, res) => {
     try {
-        const { id } = req.user;
+        // Call service function
+        const updatedTasks = await taskService.updateManyTask(req.body);
 
-        const updatedTasks = await taskService.updateManyTask(req.body, id);
-
+        // Send success response
         res.status(httpStatus.OK).json(
             response({
                 message: 'Tasks updated successfully',
@@ -380,6 +380,7 @@ const updateManyTask = async (req, res) => {
             })
         );
     } catch (error) {
+        // Handle errors
         res.status(httpStatus.INTERNAL_SERVER_ERROR).json(
             response({
                 message: error.message,
@@ -389,6 +390,19 @@ const updateManyTask = async (req, res) => {
         );
     }
 };
+
+const updateManyTaskSubmited = catchAsync(async (req, res) => {
+    const tasks = await taskService.updateManyTaskSubmited(req.body);
+    res.status(httpStatus.OK).json(
+        response({
+            message: 'Tasks updated successfully',
+            status: 'OK',
+            statusCode: httpStatus.OK,
+            data: tasks,
+        })
+    );
+})
+
 
 const getAllTaskSubmitedToManager = catchAsync(async (req, res) => {
     const { id } = req.user;
@@ -454,5 +468,6 @@ module.exports = {
     deleteSingleSubTaskById,
     getSingleSubTaskById,
     getSingleTaskById,
-    updateTaskAdmin
+    updateTaskAdmin,
+    updateManyTaskSubmited
 };

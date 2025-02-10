@@ -32,6 +32,10 @@ const submitedTaskSchema = new mongoose.Schema({
         enum: ["Daily", "Weekly"],
         required: true,
     },
+    resiveAdmin: {
+        type: Boolean,
+        default: false
+    }
 
 })
 
