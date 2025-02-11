@@ -16,6 +16,15 @@ const createTask = async (taskData) => {
     }
 };
 
+const getAllTaskFromManager = async () => {
+    try {
+        const task = await submitedTask.find({ resiveAdmin: true });  // Pass userID
+        return task;
+    } catch (error) {
+        throw new ApiError(500, error.message);
+    }
+}
+
 const updateTaskAdmin = async (id, taskData) => {
     try {
 
@@ -469,5 +478,6 @@ module.exports = {
     deleteSingleSubTaskById,
     getSingleTaskById,
     updateTaskAdmin,
-    updateManyTaskSubmited
+    updateManyTaskSubmited,
+    getAllTaskFromManager
 };

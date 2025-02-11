@@ -27,6 +27,31 @@ const createTask = async (req, res) => {
     }
 };
 
+const getAllTaskFromManager = async (req, res) => {
+    try {
+        const task = await taskService.getAllTaskFromManager();  // Pass userID
+        res.status(httpStatus.OK).json(
+            response({
+                message: 'Task retrieved successfully',
+                status: 'OK',
+                statusCode: httpStatus.OK,
+                data: {
+                    task,
+                    totalTask: task.length
+                },
+            })
+        );
+    } catch (error) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json(
+            response({
+                message: error.message,
+                status: 'ERROR',
+                statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+            })
+        );
+    }
+};
+
 const updateTaskAdmin = async (req, res) => {
     try {
         const { id } = req.params;
@@ -469,5 +494,6 @@ module.exports = {
     getSingleSubTaskById,
     getSingleTaskById,
     updateTaskAdmin,
-    updateManyTaskSubmited
+    updateManyTaskSubmited,
+    getAllTaskFromManager
 };

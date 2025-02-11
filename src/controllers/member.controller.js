@@ -127,6 +127,7 @@ const login = async (req, res) => {
 
 const updateMembersAsUser = catchAsync(async (req, res) => {
     const getIdInToken = req.user.id;
+    console.log(req.file);
     const updatedMember = await memberService.updateMembersAsUser(getIdInToken, req.body, req.file);
 
     res.status(httpStatus.OK).json(

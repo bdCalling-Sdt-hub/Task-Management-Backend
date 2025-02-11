@@ -14,6 +14,8 @@ router.delete('/single-task/:id', auth("commonForAdmin"), taskController.deleteS
 router.get('/my-task/:userID', auth("commonForAdmin"), taskController.getSingleTask);
 router.get('/all', auth("commonForAdmin"), taskController.getAllTasks);
 
+router.get('/task-from-manager', auth("commonForAdmin"), taskController.getAllTaskFromManager);
+
 
 // Sub-task routes
 
