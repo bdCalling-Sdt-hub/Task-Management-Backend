@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.post('/create-task', auth("commonForAdmin"), taskController.createTask);
 router.patch('/update-task/:id', auth("commonForAdmin"), taskController.updateTaskAdmin);
+router.delete('/delete-task/:id', auth("commonForAdmin"), taskController.deleteTaskAdmin);
 
 router.get('/single-task/:id', auth("commonForAdmin"), taskController.getSingleSubTaskById);
 router.get('/task/:id', auth("commonForAdmin"), taskController.getSingleTaskById);

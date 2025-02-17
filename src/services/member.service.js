@@ -121,6 +121,18 @@ const getAllMembers = async () => {
     }
 };
 
+const getAllCustomer = async () => {
+    try {
+        const members = await Member.find({ role: "customer" });
+        return {
+            members ,
+            totalCustomer : members.length
+        };
+    } catch (error) {
+        throw new ApiError(500, error.message);
+    }
+};
+
 // Update a member by ID
 const updateMember = async (id, updateData) => {
     try {
@@ -214,5 +226,6 @@ module.exports = {
     updateMember,
     login,
     updateMembersAsUser,
-    getAllManager
+    getAllManager,
+    getAllCustomer
 };

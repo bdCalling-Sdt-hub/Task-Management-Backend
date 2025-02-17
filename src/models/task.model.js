@@ -17,11 +17,13 @@ const taskSchema = new mongoose.Schema({
     },
     taskName: {
         type: String,
-        required: true,
+        // required: true,
+        default: "",
     },
     taskDescription: {
         type: String,
-        required: true,
+        // required: true,
+        default: "",
     },
     totalAssignedCustomer: {
         type: Number,

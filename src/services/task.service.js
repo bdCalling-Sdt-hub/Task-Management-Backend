@@ -25,6 +25,18 @@ const getAllTaskFromManager = async () => {
     }
 }
 
+const deleteTaskAdmin = async (id) => {
+    try {
+        const deletedTask = await Task.findByIdAndDelete(id);
+        if (!deletedTask) {
+            throw new ApiError(404, "Task not found");
+        }
+        return deletedTask;
+    } catch (error) {
+        throw new ApiError(500, error.message);
+    }
+}
+
 const updateTaskAdmin = async (id, taskData) => {
     try {
 
@@ -38,29 +50,52 @@ const updateTaskAdmin = async (id, taskData) => {
         throw new ApiError(500, error.message);
     }
 }
-
 const getAllTasks = async (page = 1, limit = 10) => {
     try {
         const skip = (page - 1) * limit; // Calculate the number of documents to skip
+
+        // Fetch tasks with pagination
         const tasks = await Task.find()
             .skip(skip)
             .limit(limit); // Limit the number of tasks returned
 
+        if (tasks.length === 0) {
+            throw new ApiError(404, "No tasks found");
+        }
+
+        // Fetch and populate subTasks data for each task
+        const taskWithSubTasks = await Promise.all(
+            tasks.map(async (task) => {
+                let subTasksData = [];
+                if (task.subTasks && task.subTasks.length > 0) {
+                    // Populate subTasks only if there are any subtask IDs
+                    subTasksData = await SubTask.find({ _id: { $in: task.subTasks } }).lean();
+                }
+                // Return the task with its populated subTasks data
+                return {
+                    ...task.toObject(),
+                    subTasks: subTasksData,
+                };
+            })
+        );
+
+        // Get total task count for pagination
         const totalTasks = await Task.countDocuments(); // Get the total number of tasks
         const totalPages = Math.ceil(totalTasks / limit); // Calculate the total number of pages
 
-
-
+        // Return tasks with populated subTasks, pagination info
         return {
-            tasks,
+            tasks: taskWithSubTasks,
             totalTasks,
             totalPages,
             currentPage: page,
         };
     } catch (error) {
-        throw new ApiError(500, error.message);
+        throw new ApiError(500, error.message); // Handle any errors
     }
 };
+
+
 
 const getSingleTaskById = async (id) => {
     try {
@@ -479,5 +514,6 @@ module.exports = {
     getSingleTaskById,
     updateTaskAdmin,
     updateManyTaskSubmited,
-    getAllTaskFromManager
+    getAllTaskFromManager,
+    deleteTaskAdmin
 };

@@ -76,6 +76,28 @@ const updateTaskAdmin = async (req, res) => {
         );
     }
 };
+const deleteTaskAdmin = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deletedTask = await taskService.deleteTaskAdmin(id);
+        res.status(httpStatus.OK).json(
+            response({
+                message: 'Task deleted successfully',
+                status: 'OK',
+                statusCode: httpStatus.OK,
+                data: deletedTask,
+            })
+        );
+    } catch (error) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json(
+            response({
+                message: error.message,
+                status: 'ERROR',
+                statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+            })
+        );
+    }
+};
 
 const getSingleTaskById = async (req, res) => {
     try {
@@ -495,5 +517,6 @@ module.exports = {
     getSingleTaskById,
     updateTaskAdmin,
     updateManyTaskSubmited,
-    getAllTaskFromManager
+    getAllTaskFromManager,
+    deleteTaskAdmin
 };

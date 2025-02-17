@@ -20,6 +20,18 @@ const createMember = catchAsync(async (req, res) => {
     );
 });
 
+const getAllCustomer = catchAsync(async (req, res) => {
+    const { members, totalCustomer } = await memberService.getAllCustomer();
+    res.status(httpStatus.OK).json(
+        response({
+            message: "Members retrieved successfully",
+            status: "OK",
+            statusCode: httpStatus.OK,
+            data: { members, totalCustomer },
+        })
+    );
+});
+
 // Get a single member by ID
 const getSingleMember = catchAsync(async (req, res) => {
 
@@ -161,5 +173,6 @@ module.exports = {
     login,
     getSingleMemberAsAdmin,
     updateMembersAsUser,
-    getAllManager
+    getAllManager,
+    getAllCustomer
 };
