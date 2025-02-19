@@ -14,7 +14,10 @@ const getTasksAnalyticsWeeklyAndMonthly = catchAsync(async (req, res) => {
         });
     }
 
-    const { analytics, totalMyTasks, dueTasks, thisMonthName } = await analyticsService.getTasksAnalyticsWeeklyAndMonthly(email, week);
+    const { analytics,
+        totalMyTasks,
+        dueTasks,
+        thisMonthName } = await analyticsService.getTasksAnalyticsWeeklyAndMonthly(email, week);
 
     res.status(200).json({
         status: "OK",

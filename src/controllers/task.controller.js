@@ -342,6 +342,8 @@ const updateManySubTasks = async (req, res) => {
 const postTaskToManager = async (req, res) => {
     try {
         const { id } = req.user;
+        console.log("Request Body:", req.body); // Debugging
+        console.log("User ID:", id); // Debugging
 
         const task = await taskService.postTaskToManager(req.body, id);  // Pass userID
         res.status(httpStatus.CREATED).json(

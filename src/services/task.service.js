@@ -183,7 +183,7 @@ const getSingleSubTask = async (email) => {
             throw new ApiError(400, "Email is required");
         }
 
-        const task = await SubTask.find({ userEmail: email, taskType: "Weekly" }); // Convert to lowercase
+        const task = await SubTask.find({ userEmail: email, taskType: "Weekly", isCompleted: false }); // Convert to lowercase
 
         console.log("task", task);
 
@@ -204,9 +204,9 @@ const getSingleDailySubTask = async (email) => {
             throw new ApiError(400, "Email is required");
         }
 
-        const task = await SubTask.find({ userEmail: email.toLowerCase(), taskType: "Daily" }); // Convert to lowercase
+        const task = await SubTask.find({ userEmail: email.toLowerCase(), taskType: "Daily", isCompleted: false }); // Convert to lowercase
 
-
+        console.log("task daily", task);
 
         if (!task.length) {
             throw new ApiError(404, "No tasks found for this email");
@@ -355,7 +355,7 @@ const postTaskToManager = async (taskData, userID) => {
         // Update existing tasks: Set `resiveAdmin: true`
         const updateSubTask = await SubTask.updateMany(
             { _id: { $in: taskIds } },
-            { $set: { isCompleted: true, updatedAt: new Date() } }
+            { $set: { isCompleted: true, updatedAt: new Date(), taskSubmissionDate: new Date() } }
         );
 
         if (updateSubTask.modifiedCount === 0) {
