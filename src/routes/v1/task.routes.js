@@ -39,9 +39,13 @@ router.get('/task-request-manager', auth("commonForAdmin"), taskController.getAl
 
 
 router.get('/task-submited-customer', chewckAuth("manager"), taskController.getAllTaskSubmitedToManager);
-router.patch('/customer-viewed/:id', chewckAuth("manager"), taskController.getAllTaskViewedToManager);
+router.patch('/customer-viewed', chewckAuth("manager"), taskController.getAllTaskViewedToManager);
 router.patch('/manager/update-task', chewckAuth("manager"), taskController.updateManyTaskSubmited);
 router.get('/customer-task-search/:userId', chewckAuth("manager"), taskController.getAllTaskSearchToManager);
+router.get('/manager/customer/all', chewckAuth("manager"), taskController.getAllCustommerForManager);
+router.post('/make-pdf', chewckAuth("manager"), taskController.generatePdfForManager); // by using pdfkit
+
+router.post('/manager/task-submit-to-admin/:id', chewckAuth("manager"), taskController.submitAllTaskSubmitToAdmin);
 
 
 module.exports = router;

@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const app = require("./app");
 const config = require("./config/config");
 const logger = require("./config/logger");
+// const path = require("path");
 
 // My Local IP Address
 const myIp = process.env.BACKEND_IP;
@@ -46,6 +47,8 @@ const unexpectedErrorHandler = (error) => {
   logger.error(error);
   exitHandler();
 };
+
+// app.use("/pdfs", express.static(path.join(__dirname, "public/pdfs")));
 
 process.on("uncaughtException", unexpectedErrorHandler);
 process.on("unhandledRejection", unexpectedErrorHandler);

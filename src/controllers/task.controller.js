@@ -468,7 +468,8 @@ const getAllTaskSubmitedToManager = catchAsync(async (req, res) => {
 
 
 const getAllTaskViewedToManager = catchAsync(async (req, res) => {
-    const tasks = await taskService.getAllTaskViewedToManager(req.params.id);
+
+    const tasks = await taskService.getAllTaskViewedToManager(req.body.id);
     res.status(httpStatus.OK).json(
         response({
             message: 'Viewed Customer retrieved successfully',
@@ -481,12 +482,13 @@ const getAllTaskViewedToManager = catchAsync(async (req, res) => {
 
 const getAllTaskSearchToManager = catchAsync(async (req, res) => {
     const { userId } = req.params;
+    const { managerId } = req.user;
     const { date, searchType = 'day' } = req.query; // Default searchType is 'day'
 
 
 
     // Call the service to get tasks
-    const tasks = await taskService.getAllTaskSearchToManager(userId, date, searchType);
+    const tasks = await taskService.getAllTaskSearchToManager(userId, date, searchType , managerId);
 
     res.status(httpStatus.OK).json(
         response({
@@ -494,6 +496,54 @@ const getAllTaskSearchToManager = catchAsync(async (req, res) => {
             status: "OK",
             statusCode: httpStatus.OK,
             data: tasks,
+        })
+    );
+});
+
+
+const getAllCustommerForManager = catchAsync(async (req, res) => {
+    const { id } = req.user;
+    const tasks = await taskService.getAllCustommerForManager({ id });
+    res.status(httpStatus.OK).json(
+        response({
+            message: 'Tasks retrieved successfully',
+            status: 'OK',
+            statusCode: httpStatus.OK,
+            data: tasks,
+        })
+    );
+});
+
+
+const submitAllTaskSubmitToAdmin = catchAsync(async (req, res) => {
+    const { allTaskId, title, description } = req.body;
+
+    if (!allTaskId || !Array.isArray(allTaskId) || allTaskId.length === 0) {
+        throw new ApiError(400, "Invalid allTaskId, it must be a non-empty array.");
+    }
+
+    const tasks = await taskService.submitAllTaskSubmitToAdmin({ allTaskId, title, description });
+
+    res.status(httpStatus.OK).json(
+        response({
+            message: 'Tasks submitted successfully',
+            status: 'OK',
+            statusCode: httpStatus.OK,
+            data: tasks,
+        })
+    );
+});
+
+
+const generatePdfForManager = catchAsync(async (req, res) => {
+    const { ids } = req.body;
+    const pdfPath = await taskService.generatePdfForManager({ ids });
+    res.status(httpStatus.OK).json(
+        response({
+            message: 'Tasks retrieved successfully',
+            status: 'OK',
+            statusCode: httpStatus.OK,
+            data: pdfPath,
         })
     );
 });
@@ -520,5 +570,10 @@ module.exports = {
     updateTaskAdmin,
     updateManyTaskSubmited,
     getAllTaskFromManager,
-    deleteTaskAdmin
+    deleteTaskAdmin,
+    getAllCustommerForManager,
+    submitAllTaskSubmitToAdmin,
+
+
+    generatePdfForManager
 };
