@@ -37,11 +37,7 @@ const memberSchema = new mongoose.Schema({
     }, // Role field
     assignedManager: {
         type: mongoose.Schema.Types.ObjectId, // ✅ Changed to ObjectId
-        ref: 'Manager', // Assuming you have a Manager model
-    },
-    assignedManagerName: {
-        type: String,
-        default: ""
+        ref: 'Member', // Assuming you have a Manager model
     },
     myTasks: {
         type: [], // Store task IDs
@@ -80,11 +76,14 @@ const memberSchema = new mongoose.Schema({
     },
     userActivity: {
         type: Boolean,
+        // required: [true, 'Please add a user activity'],
         default: true
     } // Additional activity tracking
 }, { timestamps: true });
 
 const Member = mongoose.model('Member', memberSchema);
+
+
 
 memberSchema.statics.isEmailTaken = async function (email, excludeUserId) {
     const member = await this.findOne({ email, _id: { $ne: excludeUserId } });

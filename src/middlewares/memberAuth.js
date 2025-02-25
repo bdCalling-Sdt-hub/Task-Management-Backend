@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 
 const chewckAuth = (requiredRole) => {
-    
+
     return (req, res, next) => {
         const authHeader = req.headers.authorization;
 

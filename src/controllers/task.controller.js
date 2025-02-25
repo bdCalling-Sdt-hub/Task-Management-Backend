@@ -2,6 +2,8 @@ const taskService = require('../services/task.service');
 const httpStatus = require('http-status');
 const response = require('../config/response');
 const catchAsync = require('../utils/catchAsync');
+const ApiError = require('../utils/ApiError');
+const { mongoose } = require('../config/config');
 
 const createTask = async (req, res) => {
     try {
@@ -14,6 +16,56 @@ const createTask = async (req, res) => {
                 status: 'OK',
                 statusCode: httpStatus.CREATED,
                 data: newTask,
+            })
+        );
+    } catch (error) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json(
+            response({
+                message: error.message,
+                status: 'ERROR',
+                statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+            })
+        );
+    }
+};
+
+const getAllDailySubTask = async (req, res) => {
+    try {
+        const task = await taskService.getAllDailySubTask();  // Pass userID
+        res.status(httpStatus.OK).json(
+            response({
+                message: 'Task retrieved successfully',
+                status: 'OK',
+                statusCode: httpStatus.OK,
+                data: {
+                    task,
+                    totalTask: task.length
+                },
+            })
+        );
+    } catch (error) {
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json(
+            response({
+                message: error.message,
+                status: 'ERROR',
+                statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+            })
+        );
+    }
+};
+
+const getAllWeeklySubTask = async (req, res) => {
+    try {
+        const task = await taskService.getAllWeeklySubTask();  // Pass userID
+        res.status(httpStatus.OK).json(
+            response({
+                message: 'Task retrieved successfully',
+                status: 'OK',
+                statusCode: httpStatus.OK,
+                data: {
+                    task,
+                    totalTask: task.length
+                },
             })
         );
     } catch (error) {
@@ -266,14 +318,14 @@ const getSingleSubTask = async (req, res) => {
             );
         }
 
-        const task = await taskService.getSingleSubTask(email);
+        const { tasks, totalWeeklyTasks, dueWeeklyTasks } = await taskService.getSingleSubTask(email);
 
         res.status(httpStatus.OK).json(
             response({
                 message: "Task retrieved successfully",
                 status: "OK",
                 statusCode: httpStatus.OK,
-                data: task,
+                data: { tasks, totalWeeklyTasks, dueWeeklyTasks },
             })
         );
     } catch (error) {
@@ -488,7 +540,7 @@ const getAllTaskSearchToManager = catchAsync(async (req, res) => {
 
 
     // Call the service to get tasks
-    const tasks = await taskService.getAllTaskSearchToManager(userId, date, searchType , managerId);
+    const tasks = await taskService.getAllTaskSearchToManager(userId, date, searchType, managerId);
 
     res.status(httpStatus.OK).json(
         response({
@@ -516,23 +568,35 @@ const getAllCustommerForManager = catchAsync(async (req, res) => {
 
 
 const submitAllTaskSubmitToAdmin = catchAsync(async (req, res) => {
-    const { allTaskId, title, description } = req.body;
+    let { submitedTaskUrl, title, description } = req.body;
 
-    if (!allTaskId || !Array.isArray(allTaskId) || allTaskId.length === 0) {
-        throw new ApiError(400, "Invalid allTaskId, it must be a non-empty array.");
-    }
+    // 🔹 Ensure `submitedTaskUrl` is an array
+    // if (!Array.isArray(submitedTaskUrl)) {
+    //     submitedTaskUrl = [submitedTaskUrl]; // Convert to an array if it's a single string
+    // }
 
-    const tasks = await taskService.submitAllTaskSubmitToAdmin({ allTaskId, title, description });
+    // if (!submitedTaskUrl) {
+    //     return res.status(httpStatus.BAD_REQUEST).json(
+    //         response({
+    //             message: "submitedTaskUrl is required",
+    //             status: "ERROR",
+    //             statusCode: httpStatus.BAD_REQUEST,
+    //         })
+    //     )
+    // }
+
+    const tasks = await taskService.submitAllTaskSubmitToAdmin({ submitedTaskUrl, title, description });
 
     res.status(httpStatus.OK).json(
         response({
-            message: 'Tasks submitted successfully',
-            status: 'OK',
+            message: "Tasks submitted successfully",
+            status: "OK",
             statusCode: httpStatus.OK,
             data: tasks,
         })
     );
 });
+
 
 
 const generatePdfForManager = catchAsync(async (req, res) => {
@@ -547,6 +611,45 @@ const generatePdfForManager = catchAsync(async (req, res) => {
         })
     );
 });
+
+const getAllRejectedTask = catchAsync(async (req, res) => {
+    const tasks = await taskService.getAllRejectedTask();
+    res.status(httpStatus.OK).json(
+        response({
+            message: 'Tasks retrieved successfully',
+            status: 'OK',
+            statusCode: httpStatus.OK,
+            data: tasks,
+        })
+    );
+});
+
+const getSingleRejectedTaskById = catchAsync(async (req, res) => {
+    const { id } = req.params;
+    console.log(id);
+    const tasks = await taskService.getSingleRejectedTaskById({ id });
+    res.status(httpStatus.OK).json(
+        response({
+            message: 'Tasks retrieved successfully',
+            status: 'OK',
+            statusCode: httpStatus.OK,
+            data: tasks,
+        })
+    );
+});
+
+const readSingleRejectedTaskById = catchAsync(async (req, res) => {
+    const { id } = req.params;
+    const tasks = await taskService.readSingleRejectedTaskById({ id });
+    res.status(httpStatus.OK).json(
+        response({
+            message: 'Tasks retrieved successfully',
+            status: 'OK',
+            statusCode: httpStatus.OK,
+            data: tasks,
+        })
+    )
+})
 
 
 module.exports = {
@@ -573,7 +676,10 @@ module.exports = {
     deleteTaskAdmin,
     getAllCustommerForManager,
     submitAllTaskSubmitToAdmin,
-
-
+    readSingleRejectedTaskById,
+    getAllDailySubTask,
+    getAllRejectedTask,
+    getSingleRejectedTaskById,
+    getAllWeeklySubTask,
     generatePdfForManager
 };

@@ -20,6 +20,24 @@ const createTask = async (taskData) => {
     }
 };
 
+const getAllWeeklySubTask = async () => {
+    try {
+        const task = await SubTask.find({ taskType: "Weekly" });  // Pass userID
+        return task;
+    } catch (error) {
+        throw new ApiError(500, error.message);
+    }
+}
+
+const getAllDailySubTask = async () => {
+    try {
+        const task = await SubTask.find({ taskType: "Daily" });  // Pass userID
+        return task;
+    } catch (error) {
+        throw new ApiError(500, error.message);
+    }
+}
+
 const getAllTaskFromManager = async () => {
     try {
         const task = await submitedTask.find({ resiveAdmin: true });  // Pass userID
@@ -54,6 +72,7 @@ const updateTaskAdmin = async (id, taskData) => {
         throw new ApiError(500, error.message);
     }
 }
+
 const getAllTasks = async (page = 1, limit = 10) => {
     try {
         const skip = (page - 1) * limit; // Calculate the number of documents to skip
@@ -187,19 +206,32 @@ const getSingleSubTask = async (email) => {
             throw new ApiError(400, "Email is required");
         }
 
-        const task = await SubTask.find({ userEmail: email, taskType: "Weekly", isCompleted: false }); // Convert to lowercase
+        // Fetch all weekly tasks for the user
+        const totalWeeklyTasks = await SubTask.countDocuments({ userEmail: email, taskType: "Weekly" });
+
+        // Fetch only pending (incomplete) weekly tasks
+        const dueWeeklyTasks = await SubTask.countDocuments({ userEmail: email, taskType: "Weekly", isCompleted: false });
+
+        // Fetch the list of pending weekly tasks
+        const task = await SubTask.find({ userEmail: email, taskType: "Weekly", isCompleted: false });
 
         console.log("task", task);
 
         if (!task.length) {
-            throw new ApiError(404, "No tasks found for this email");
+            throw new ApiError(404, "No weekly tasks found for this email");
         }
 
-        return task; // ✅ Fix: Return the task list
+        // Return tasks along with the counts
+        return {
+            tasks: task,
+            totalWeeklyTasks,
+            dueWeeklyTasks,
+        };
     } catch (error) {
         throw new ApiError(500, error.message);
     }
 };
+
 
 
 const getSingleDailySubTask = async (email) => {
@@ -208,19 +240,34 @@ const getSingleDailySubTask = async (email) => {
             throw new ApiError(400, "Email is required");
         }
 
-        const task = await SubTask.find({ userEmail: email.toLowerCase(), taskType: "Daily", isCompleted: false }); // Convert to lowercase
+        const userEmail = email.toLowerCase();
 
-        console.log("task daily", task);
+        // Fetch total daily tasks for the user
+        const totalDailyTasks = await SubTask.countDocuments({ userEmail, taskType: "Daily" });
 
-        if (!task.length) {
-            throw new ApiError(404, "No tasks found for this email");
+        // Fetch only pending (incomplete) daily tasks
+        const dueDailyTasks = await SubTask.countDocuments({ userEmail, taskType: "Daily", isCompleted: false });
+
+        // Fetch the list of pending daily tasks
+        const tasks = await SubTask.find({ userEmail, taskType: "Daily", isCompleted: false });
+
+        console.log("task daily", tasks);
+
+        if (!tasks.length) {
+            throw new ApiError(404, "No daily tasks found for this email");
         }
 
-        return task; // ✅ Fix: Return the task list
+        // Return tasks along with the counts
+        return {
+            tasks,
+            totalDailyTasks,
+            dueDailyTasks,
+        };
     } catch (error) {
         throw new ApiError(500, error.message);
     }
-}
+};
+
 
 const updateManySubTasks = async (tasks) => {
     try {
@@ -452,19 +499,24 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
             startDate.setUTCHours(0, 0, 0, 0);
             endDate = new Date(queryDate);
             endDate.setUTCHours(23, 59, 59, 999);
+
         } else if (searchType === "week") {
-            // Get the start of the week (Monday)
+            // Get the numeric day of the month (1-31)
+            const dayOfMonth = queryDate.getUTCDate();
+
+            // Calculate which week block the date belongs to
+            const weekStartDay = Math.floor((dayOfMonth - 1) / 7) * 7 + 1;
+            const weekEndDay = weekStartDay + 6;
+
             startDate = new Date(queryDate);
-            const dayOfWeek = startDate.getUTCDay();
-            const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Adjust to Monday
-            startDate.setUTCDate(startDate.getUTCDate() + diff);
+            startDate.setUTCDate(weekStartDay);
             startDate.setUTCHours(0, 0, 0, 0);
 
-            // Get the end of the week (Sunday)
-            endDate = new Date(startDate);
-            endDate.setUTCDate(startDate.getUTCDate() + 6);
+            endDate = new Date(queryDate);
+            endDate.setUTCDate(weekEndDay);
             endDate.setUTCHours(23, 59, 59, 999);
-        } else {
+        }
+        else {
             throw new ApiError(400, "Invalid search type. Use 'day' or 'week'.");
         }
 
@@ -474,7 +526,8 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         // Query tasks within the date range
         const tasks = await submitedTask.find({
             userId: userId,
-            submitedDate: { $gte: startDate, $lte: endDate }
+            submitedDate: { $gte: startDate, $lte: endDate },
+            taskType: searchType == "day" ? "Daily" : "Weekly"
         }).lean();
 
         if (!tasks.length) {
@@ -504,7 +557,7 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         const centerX = (pageWidth - imageWidth) / 2; // Calculate center position
         doc.image(customerImage, centerX, 30, { width: imageWidth }) // Centered Image
         doc.moveDown(2);
-        doc.text(`${searchType == "day" ? "Daily Report" : "Weekly Report"}`, { align: "center" });
+        doc.text(`${searchType == "day" && "Daily Report" || searchType == "week" && "Weekly Report"}`, { align: "center" });
         doc.moveDown(5);
 
 
@@ -599,30 +652,30 @@ const getAllCustommerForManager = async ({ id }) => {
 };
 
 
-const submitAllTaskSubmitToAdmin = async ({ allTaskId, title, description }) => {
+const submitAllTaskSubmitToAdmin = async ({ submitedTaskUrl, title, description }) => {
     try {
-        // Fetch the tasks
-        const tasks = await submitedTask.find({ _id: { $in: allTaskId } });
 
-        if (!tasks.length) {
-            throw new ApiError(404, "No tasks found with the given IDs.");
-        }
 
-        // Filter only pending tasks
-        const pendingTasks = tasks.filter(task => task.status === "pending");
 
-        if (!pendingTasks.length) {
-            throw new ApiError(400, "No tasks with 'pending' status found.");
-        }
 
         // Create the submission
+        // const submitTask = await TaskVieweAdmin.create({
+        //     submitedTaskUrl: submitedTaskUrl,
+        //     title,
+        //     description,
+        // });
+
+
+        const task = await TaskVieweAdmin.findOne({ submitedTaskUrl: submitedTaskUrl });
+        if (task) {
+            return "This task has already been submitted.";
+        }
+
         const submitTask = await TaskVieweAdmin.create({
-            allTaskId: pendingTasks.map(task => task._id),
-            userId: tasks[0].userId,
-            managerId: tasks[0].managerId,
+            submitedTaskUrl: submitedTaskUrl,
             title,
             description,
-        });
+        })
 
         return submitTask;
 
@@ -695,6 +748,35 @@ const generatePdfForManager = async ({ ids }) => {
     });
 };
 
+const getAllRejectedTask = async () => {
+    try {
+        const task = await TaskVieweAdmin.find({ isRead: false });
+        return task;
+    } catch (error) {
+        throw new ApiError(500, error.message);
+    }
+};
+
+const getSingleRejectedTaskById = async ({ id }) => {
+    try {
+        console.log("id", id);
+        const task = await TaskVieweAdmin.findById(id);
+        return task;
+    } catch (error) {
+        throw new ApiError(500, error.message);
+    }
+}
+
+const readSingleRejectedTaskById = async ({ id }) => {
+    try {
+        // console.log("id", id);
+        const task = await TaskVieweAdmin.updateOne({ _id: id }, { $set: { isRead: true } });
+        return task;
+    } catch (error) {
+        throw new ApiError(500, error.message);
+    }
+}
+
 
 
 cron.schedule("0 0 * * *", async () => {
@@ -751,7 +833,11 @@ module.exports = {
     getAllTaskFromManager,
     deleteTaskAdmin,
     getAllCustommerForManager,
-
     submitAllTaskSubmitToAdmin,
+    readSingleRejectedTaskById,
+    getAllRejectedTask,
+    getAllDailySubTask,
+    getSingleRejectedTaskById,
+    getAllWeeklySubTask,
     generatePdfForManager
 };

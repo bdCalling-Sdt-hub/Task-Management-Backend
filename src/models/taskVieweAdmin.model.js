@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const taskVieweAdminSchema = new mongoose.Schema({
-    allTaskId: {
-        type: [mongoose.Schema.Types.ObjectId],
-        required: true,
+    submitedTaskUrl: {
+        type: String,
+        required: [true, 'Submited Task Url is required']
     },
     userId: {
         type: String,

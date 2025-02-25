@@ -17,6 +17,16 @@ router.get('/all', auth("commonForAdmin"), taskController.getAllTasks);
 
 router.get('/task-from-manager', auth("commonForAdmin"), taskController.getAllTaskFromManager);
 
+router.get('/all/rejected-task', auth("commonForAdmin"), taskController.getAllRejectedTask);
+router.get('/all/rejected-task/:id', auth("commonForAdmin"), taskController.getSingleRejectedTaskById);
+router.patch('/all/rejected-task/:id', auth("commonForAdmin"), taskController.readSingleRejectedTaskById);
+
+
+router.get('/all/daily-sub-task', auth("commonForAdmin"), taskController.getAllDailySubTask)
+router.get('/all/week-sub-task', auth("commonForAdmin"), taskController.getAllWeeklySubTask)
+
+
+
 
 // Sub-task routes
 
@@ -45,8 +55,7 @@ router.get('/customer-task-search/:userId', chewckAuth("manager"), taskControlle
 router.get('/manager/customer/all', chewckAuth("manager"), taskController.getAllCustommerForManager);
 router.post('/make-pdf', chewckAuth("manager"), taskController.generatePdfForManager); // by using pdfkit
 
-router.post('/manager/task-submit-to-admin/:id', chewckAuth("manager"), taskController.submitAllTaskSubmitToAdmin);
-
+router.post('/manager/task-submit-to-admin', chewckAuth("manager"), taskController.submitAllTaskSubmitToAdmin);
 
 module.exports = router;
 

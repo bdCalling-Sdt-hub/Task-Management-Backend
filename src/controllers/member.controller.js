@@ -94,6 +94,8 @@ const getAllMembers = catchAsync(async (req, res) => {
 const updateMember = catchAsync(async (req, res) => {
     const updatedMember = await memberService.updateMember(req.params.id, req.body);
 
+    
+
     res.status(httpStatus.OK).json(
         response({
             message: "Member updated successfully",
