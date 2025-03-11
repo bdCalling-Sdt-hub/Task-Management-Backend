@@ -3,6 +3,7 @@ const { Member, SubTask, Task } = require("../models");
 const ApiError = require("../utils/ApiError");
 const jwtToken = require('jsonwebtoken');
 
+
 const createMember = async (data) => {
     try {
         // 1️⃣ Check if the member already exists
@@ -21,12 +22,13 @@ const createMember = async (data) => {
             throw new ApiError(400, "Password must be at least 6 characters");
         }
 
-
         // 4️⃣ Fetch & Validate Tasks
         const dailyTaskIds = Array.isArray(data.myDailyTasks) ? data.myDailyTasks : [];
         const weeklyTaskIds = Array.isArray(data.myWeeklyTasks) ? data.myWeeklyTasks : [];
-        const dailyTasks = await SubTask.find({ _id: { $in: dailyTaskIds } });
-        const weeklyTasks = await SubTask.find({ _id: { $in: weeklyTaskIds } });
+
+        // Fetch all tasks in myDailyTasks and myWeeklyTasks
+        const dailyTasks = await Task.find({ _id: { $in: dailyTaskIds } });
+        const weeklyTasks = await Task.find({ _id: { $in: weeklyTaskIds } });
 
         // 5️⃣ Update Daily & Weekly Subtasks
         if (dailyTaskIds.length > 0) {
@@ -67,18 +69,24 @@ const createMember = async (data) => {
             email: data.email,
             password: data.password, // Store hashed password
             role: data.role,
-            assignedManager: data.assignedManager,
-            dailyTitle: data.dailyTitle,
-            dailyDescription: data.dailyDescription,
-            weeklyTitle: data.weeklyTitle,
-            weeklyDescription: data.weeklyDescription,
-            myDailyTasks: dailyTasks.map(task => task._id),
-            myWeeklyTasks: weeklyTasks.map(task => task._id),
-            mainTaskId: data.mainTaskId,
-            assignedManagerName: assignedManagerName || ""
+
+            assignedManager: data.assignedManager || null,
+            dailyTitle: data.dailyTitle || "",
+            dailyDescription: data.dailyDescription || "",
+            weeklyTitle: data.weeklyTitle || "",
+            weeklyDescription: data.weeklyDescription || "",
+            myDailyTasks: dailyTasks.length > 0 ? dailyTasks.map(task => task._id) : [],
+            myWeeklyTasks: weeklyTasks.length > 0 ? weeklyTasks.map(task => task._id) : [],
+
+            mainTaskId: data.mainTaskId || null,
+            assignedManagerName: assignedManagerName || "",
+
+            // Set to null or an empty array if no tasks are provided
+            dailyMainTaskId: dailyTaskIds.length > 0 ? dailyTaskIds[0] : null,
+            weeklyMainTaskId: weeklyTaskIds.length > 0 ? weeklyTaskIds[0] : null,
         };
 
-
+        // Create the new member in the database
         const newMember = await Member.create(newMemberData);
 
         return newMember;
@@ -89,13 +97,19 @@ const createMember = async (data) => {
 
 
 
-// Get a single member by ID
 const getSingleMember = async (id) => {
     try {
         // Find member by ID and select only the required fields
         const member = await Member.findById(id).select(
-            "_id memberName profileImage location email role password userActivity assignedManagerName myDailyTasks myWeeklyTasks mainTaskId"
-        ).populate("assignedManager", "memberName");
+            "_id memberName profileImage location email role password userActivity assignedManagerName myDailyTasks myWeeklyTasks mainTaskId weeklyMainTaskId dailyMainTaskId "
+        )
+            .populate("assignedManager", "memberName")
+            .populate('myDailyTasks', 'subTaskName')
+            .populate('myWeeklyTasks', 'subTaskName')
+            .populate('dailyMainTaskId', 'taskClassName') // Populate dailyMainTaskId
+            .populate('weeklyMainTaskId', 'taskClassName'); // Populate weeklyMainTaskId
+
+        console.log(member);
 
         if (!member) {
             throw new ApiError(404, "Member not found");
@@ -123,7 +137,7 @@ const getAllMembers = async () => {
 
 const getAllCustomer = async () => {
     try {
-        const members = await Member.find({ role: "customer" }).populate("assignedManager", "memberName");
+        const members = await Member.find({ role: "customer" }).populate("assignedManager", "memberName").populate('myWeeklyTasks').populate('myDailyTasks');
 
         // members.map((member) => {
         //     const res = Member.updateOne({ _id: '67a6bcc48c4081a380b6ac0d' }, { $set: { assignedManagerName: member.assignedManagerName } });
@@ -148,23 +162,29 @@ const updateMember = async (id, data) => {
             throw new ApiError(404, "Member not found");
         }
 
-        // 2️⃣ Validate required fields
-        if (!data.memberName || !data.location || !data.role) {
-            throw new ApiError(400, "All fields are required");
-        }
-
-        // 3️⃣ Validate password length & Hash Password (only if password is being updated)
+        // 2️⃣ Validate password length & Hash Password (only if password is being updated)
         if (data.password && data.password.length < 6) {
             throw new ApiError(400, "Password must be at least 6 characters");
         }
 
-        // 4️⃣ Fetch & Validate Tasks
+        // 3️⃣ Validate Tasks (Ensure that they are valid arrays)
         const dailyTaskIds = Array.isArray(data.myDailyTasks) ? data.myDailyTasks : [];
         const weeklyTaskIds = Array.isArray(data.myWeeklyTasks) ? data.myWeeklyTasks : [];
-        const dailyTasks = await SubTask.find({ _id: { $in: dailyTaskIds } });
-        const weeklyTasks = await SubTask.find({ _id: { $in: weeklyTaskIds } });
 
-        // 5️⃣ Update Daily & Weekly Subtasks (If Tasks are passed in the update data)
+        let dailyTasks = [];
+        let weeklyTasks = [];
+
+        // 4️⃣ Fetch Daily Tasks only if valid task IDs are provided
+        if (dailyTaskIds.length > 0) {
+            dailyTasks = await Task.find({ _id: { $in: dailyTaskIds } });
+        }
+
+        // 5️⃣ Fetch Weekly Tasks only if valid task IDs are provided
+        if (weeklyTaskIds.length > 0) {
+            weeklyTasks = await Task.find({ _id: { $in: weeklyTaskIds } });
+        }
+
+        // 6️⃣ Update Daily & Weekly Subtasks (If Tasks are passed in the update data)
         if (dailyTaskIds.length > 0) {
             await SubTask.updateMany(
                 { _id: { $in: dailyTaskIds } },
@@ -179,7 +199,7 @@ const updateMember = async (id, data) => {
             );
         }
 
-        // 6️⃣ Update `totalAssignedCustomer` in Task if the `mainTaskId` is provided
+        // 7️⃣ Update `totalAssignedCustomer` in Task if the `mainTaskId` is provided
         if (data.mainTaskId) {
             const task = await Task.findById(data.mainTaskId);
             if (task) {
@@ -188,7 +208,7 @@ const updateMember = async (id, data) => {
             }
         }
 
-        // 7️⃣ Get Assigned Manager Name (if exists)
+        // 8️⃣ Get Assigned Manager Name (if exists)
         let assignedManagerName = "";
         if (data.assignedManager) {
             const manager = await Member.findById(data.assignedManager);
@@ -197,7 +217,7 @@ const updateMember = async (id, data) => {
             }
         }
 
-        // 8️⃣ Prepare the update data
+        // 9️⃣ Prepare the update data
         const newMemberData = {
             memberName: data.memberName || member.memberName,
             location: data.location || member.location,
@@ -209,13 +229,13 @@ const updateMember = async (id, data) => {
             dailyDescription: data.dailyDescription || member.dailyDescription,
             weeklyTitle: data.weeklyTitle || member.weeklyTitle,
             weeklyDescription: data.weeklyDescription || member.weeklyDescription,
-            myDailyTasks: dailyTasks.length > 0 ? dailyTasks.map(task => task._id) : member.myDailyTasks,
-            myWeeklyTasks: weeklyTasks.length > 0 ? weeklyTasks.map(task => task._id) : member.myWeeklyTasks,
+            myDailyTasks: dailyTasks.length > 0 ? dailyTasks[0].subTasks?.map(id => id.toString()) : member.myDailyTasks,
+            myWeeklyTasks: weeklyTasks.length > 0 ? weeklyTasks[0].subTasks?.map(id => id.toString()) : member.myWeeklyTasks,
             mainTaskId: data.mainTaskId || member.mainTaskId,
             assignedManagerName: assignedManagerName || member.assignedManagerName
         };
 
-        // 9️⃣ Update the member data
+        // 🔟 Update the member data
         const updatedMember = await Member.findByIdAndUpdate(id, newMemberData, { new: true, runValidators: true });
 
         if (!updatedMember) {
@@ -287,6 +307,17 @@ const updateMembersAsUser = async (id, updateData, file) => {
 const getAllManager = async () => {
     try {
         const members = await Member.find({ role: "manager" });
+
+
+        // totalAssignedCustomer
+
+        for (const member of members) {
+            const tasks = await Member.find({ assignedManager: member._id });
+            member.totalAssignedCustomer = tasks.length;
+        }
+
+        console.log(members);
+
         return members;
     } catch (error) {
         throw new ApiError(500, error.message);

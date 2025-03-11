@@ -58,6 +58,16 @@ const memberSchema = new mongoose.Schema({
         type: String,
         default: "",
     },
+    dailyMainTaskId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Task',
+        default: "",
+    },
+    weeklyMainTaskId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Task',
+        default: "",
+    },
     dailyTitle: {
         type: String,
         default: ""
@@ -79,6 +89,11 @@ const memberSchema = new mongoose.Schema({
         // required: [true, 'Please add a user activity'],
         default: true
     } // Additional activity tracking
+    ,
+    totalAssignedCustomer: {
+        type: Number,
+        default: 0
+    }
 }, { timestamps: true });
 
 const Member = mongoose.model('Member', memberSchema);
