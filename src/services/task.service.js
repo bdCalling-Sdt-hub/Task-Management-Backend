@@ -81,7 +81,6 @@ const getAllTasks = async (page = 1, limit = 10) => {
         const tasks = await Task.find()
             .skip(skip)
             .limit(limit); // Limit the number of tasks returned
-
         if (tasks.length === 0) {
             throw new ApiError(404, "No tasks found");
         }
@@ -94,10 +93,14 @@ const getAllTasks = async (page = 1, limit = 10) => {
                     // Populate subTasks only if there are any subtask IDs
                     subTasksData = await SubTask.find({ _id: { $in: task.subTasks } }).lean();
                 }
-                // Return the task with its populated subTasks data
+
+                // Ensure subTasks are not empty before querying members
+
+
+                // Return the task with its populated subTasks and the members assigned to this task
                 return {
                     ...task.toObject(),
-                    subTasks: subTasksData,
+                    subTasks: subTasksData
                 };
             })
         );
@@ -117,6 +120,7 @@ const getAllTasks = async (page = 1, limit = 10) => {
         throw new ApiError(500, error.message); // Handle any errors
     }
 };
+
 
 
 
@@ -206,65 +210,102 @@ const getSingleSubTask = async (email) => {
             throw new ApiError(400, "Email is required");
         }
 
-        // Fetch all weekly tasks for the user
-        const totalWeeklyTasks = await SubTask.countDocuments({ userEmail: email, taskType: "Weekly" });
-
-        // Fetch only pending (incomplete) weekly tasks
-        const dueWeeklyTasks = await SubTask.countDocuments({ userEmail: email, taskType: "Weekly", isCompleted: false });
-
-        // Fetch the list of pending weekly tasks
-        const task = await SubTask.find({ userEmail: email, taskType: "Weekly", isCompleted: false });
-
-        console.log("task", task);
-
-        if (!task.length) {
-            throw new ApiError(404, "No weekly tasks found for this email");
+        // Fetch user data to ensure they exist
+        const user = await Member.findOne({ email: email });
+        if (!user) {
+            throw new ApiError(404, "User not found");
         }
 
-        // Return tasks along with the counts
+        // Log daily tasks to verify user.myDailyTasks structure
+        console.log("User's Daily Tasks:", user.myDailyTasks);
+
+        // Fetch the count of total weekly tasks assigned to the user
+        const totalWeeklyTasks = await SubTask.countDocuments({ userEmail: email, taskType: "Weekly" });
+
+        // Fetch the count of due (incomplete) weekly tasks
+        const dueWeeklyTasks = await SubTask.countDocuments({ userEmail: email, taskType: "Weekly", isCompleted: false });
+
+        // Make sure user has weekly tasks assigned
+        if (!user.myWeeklyTasks || user.myWeeklyTasks.length === 0) {
+            throw new ApiError(404, "No weekly tasks assigned to this user");
+        }
+
+        // Fetch the list of pending weekly tasks using the myWeeklyTasks array
+        const weeklyTask = await SubTask.find({
+            _id: { $in: user.myWeeklyTasks },
+            isCompleted: false
+        });
+
+        console.log("Pending Weekly Tasks:", weeklyTask);
+
+        // If no pending tasks, return a 404 error
+        if (!weeklyTask.length) {
+            throw new ApiError(404, "No pending weekly tasks found for this user");
+        }
+
+        // Return tasks along with the total and due counts
         return {
-            tasks: task,
+            tasks: weeklyTask,
             totalWeeklyTasks,
             dueWeeklyTasks,
         };
     } catch (error) {
-        throw new ApiError(500, error.message);
+        console.error("Error:", error); // Log any error that occurs during the execution
+        throw new ApiError(500, error.message); // Return a 500 server error if an unexpected error occurs
     }
 };
 
-
-
 const getSingleDailySubTask = async (email) => {
     try {
+        // Step 1: Check if the email is provided
         if (!email) {
             throw new ApiError(400, "Email is required");
         }
 
-        const userEmail = email.toLowerCase();
+        const userEmail = email.toLowerCase(); // Normalize the email
 
-        // Fetch total daily tasks for the user
-        const totalDailyTasks = await SubTask.countDocuments({ userEmail, taskType: "Daily" });
+        // Step 2: Fetch total and due daily tasks
+        const totalDailyTasks = await SubTask.countDocuments({
+            userEmail,
+            taskType: "Daily"
+        });
 
-        // Fetch only pending (incomplete) daily tasks
-        const dueDailyTasks = await SubTask.countDocuments({ userEmail, taskType: "Daily", isCompleted: false });
+        const dueDailyTasks = await SubTask.countDocuments({
+            userEmail,
+            taskType: "Daily",
+            isCompleted: false
+        });
 
-        // Fetch the list of pending daily tasks
-        const tasks = await SubTask.find({ userEmail, taskType: "Daily", isCompleted: false });
-
-        console.log("task daily", tasks);
-
-        if (!tasks.length) {
-            throw new ApiError(404, "No daily tasks found for this email");
+        // Step 3: Fetch the user to access their daily tasks
+        const user = await Member.findOne({ email: email });
+        if (!user) {
+            throw new ApiError(404, "User not found");
         }
 
-        // Return tasks along with the counts
+        // Log the user's daily tasks to verify structure
+        console.log("User's Daily Tasks:", user.myDailyTasks);
+
+        // Step 4: Fetch the list of tasks that the user is assigned
+        const dailyTasks = await SubTask.find({
+            _id: { $in: user.myDailyTasks } // Match task IDs from user's `myDailyTasks`
+            , isCompleted: false
+        });
+
+        // If no daily tasks are assigned, throw an error
+        if (!dailyTasks.length) {
+            throw new ApiError(404, "No daily tasks assigned to this user");
+        }
+
+        // Step 5: Return tasks along with the counts
         return {
-            tasks,
+            tasks: dailyTasks,
             totalDailyTasks,
             dueDailyTasks,
         };
+
     } catch (error) {
-        throw new ApiError(500, error.message);
+        console.error("Error fetching daily tasks:", error); // Log any error that occurs during execution
+        throw new ApiError(500, error.message); // Return an internal server error if an exception occurs
     }
 };
 

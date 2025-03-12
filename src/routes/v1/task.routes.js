@@ -32,6 +32,7 @@ router.get('/all/week-sub-task', auth("commonForAdmin"), taskController.getAllWe
 
 router.get('/weekly-task/customer', chewckAuth("customer"), taskController.getSingleSubTask);
 router.get('/daily-task/customer', chewckAuth("customer"), taskController.getSingleDailySubTask);
+
 router.get('/all/sub-task/:id', auth("common"), taskController.getAllSubTask);
 router.post('/sub-task', auth("common"), taskController.createSubTask);
 

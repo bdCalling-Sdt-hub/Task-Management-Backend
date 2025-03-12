@@ -62,6 +62,10 @@ const createMember = async (data) => {
             }
         }
 
+        const task = await Task.findById(dailyTaskIds[0] || weeklyTaskIds[0]);
+        task.totalAssignedCustomer = (task.totalAssignedCustomer || 0) + 1;
+        task.save();
+
         // 8️⃣ Create the new Member
         const newMemberData = {
             memberName: data.memberName,
@@ -88,7 +92,6 @@ const createMember = async (data) => {
 
         // Create the new member in the database
         const newMember = await Member.create(newMemberData);
-
         return newMember;
     } catch (error) {
         throw new ApiError(500, error.message);
