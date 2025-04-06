@@ -62,9 +62,13 @@ const createMember = async (data) => {
             }
         }
 
-        const task = await Task.findById(dailyTaskIds[0] || weeklyTaskIds[0]);
-        task.totalAssignedCustomer = (task.totalAssignedCustomer || 0) + 1;
-        task.save();
+
+        if (dailyTaskIds[0] || weeklyTaskIds[0]) {
+            const task = await Task.findById(dailyTaskIds[0] || weeklyTaskIds[0]);
+            task.totalAssignedCustomer = (task.totalAssignedCustomer || 0) + 1;
+            task.save();
+        }
+
 
         // 8️⃣ Create the new Member
         const newMemberData = {
@@ -83,8 +87,7 @@ const createMember = async (data) => {
             myWeeklyTasks: weeklyTasks.length > 0 ? weeklyTasks.map(task => task._id) : [],
 
             mainTaskId: data.mainTaskId || null,
-            assignedManagerName: assignedManagerName || "",
-
+            assignedManagerName: assignedManagerName || "", 
             // Set to null or an empty array if no tasks are provided
             dailyMainTaskId: dailyTaskIds.length > 0 ? dailyTaskIds[0] : null,
             weeklyMainTaskId: weeklyTaskIds.length > 0 ? weeklyTaskIds[0] : null,
@@ -92,6 +95,7 @@ const createMember = async (data) => {
 
         // Create the new member in the database
         const newMember = await Member.create(newMemberData);
+
         return newMember;
     } catch (error) {
         throw new ApiError(500, error.message);
@@ -220,10 +224,14 @@ const updateMember = async (id, data) => {
             }
         }
 
+        // member.userActivity = data.userActivity;
+        // member.save();
+
         // 9️⃣ Prepare the update data
         const newMemberData = {
             memberName: data.memberName || member.memberName,
             location: data.location || member.location,
+            userActivity: data.userActivity,
             email: data.email || member.email,
             password: data.password || member.password, // Store hashed password if provided
             role: data.role || member.role,
@@ -235,7 +243,7 @@ const updateMember = async (id, data) => {
             myDailyTasks: dailyTasks.length > 0 ? dailyTasks[0].subTasks?.map(id => id.toString()) : member.myDailyTasks,
             myWeeklyTasks: weeklyTasks.length > 0 ? weeklyTasks[0].subTasks?.map(id => id.toString()) : member.myWeeklyTasks,
             mainTaskId: data.mainTaskId || member.mainTaskId,
-            assignedManagerName: assignedManagerName || member.assignedManagerName
+            assignedManagerName: assignedManagerName || ''
         };
 
         // 🔟 Update the member data
@@ -257,6 +265,11 @@ const login = async (email, password) => {
 
     // Check if the member exists
     const member = await Member.findOne({ email });
+
+    if (member.userActivity === false) {
+        throw new ApiError(400, "You are Block by Admin !");
+    }
+
     if (!member) {
         throw new ApiError(401, "Invalid email or password");
     }

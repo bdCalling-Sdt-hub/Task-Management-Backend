@@ -1,4 +1,4 @@
-const { SubTask, Member, User } = require('../models');
+const { SubTask, Member, User, } = require('../models');
 const mongoose = require('mongoose');
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
@@ -180,6 +180,8 @@ const createSubTask = async (taskData) => {
         console.log("Creating subtask:", taskData);
         // Create a new subtask instance
         const newSubTask = new SubTask(taskData);
+
+        newSubTask.taskSubmissionDate = new Date();
         // Save to database
         await newSubTask.save();
         return newSubTask;
@@ -465,6 +467,7 @@ const postTaskToManager = async (taskData, userID) => {
 
         // Insert modified data into `submitedTask`
         const createMany = await submitedTask.insertMany(modifiedTaskData);
+        console.log(createMany, modifiedTaskData);
 
         return createMany;
     } catch (error) {
@@ -528,7 +531,7 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         }
 
         // Convert provided date string (YYYY-MM-DD) to a valid Date object
-        const queryDate = new Date(`${date}T00:00:00.000Z`); // Force UTC
+        const queryDate = new Date(`${date}`); // Force UTC
         if (isNaN(queryDate)) {
             throw new ApiError(400, "Invalid date format. Use 'YYYY-MM-DD'.");
         }
@@ -622,7 +625,7 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
 
 
 
-            doc.fontSize(12).fillColor("#333").text(`Task ${index + 1}`, { underline: true }).moveDown(0.5);
+            doc.fontSize(12).fillColor("#333").text(` ${task.title}`, { underline: true }).moveDown(0.5);
             doc.fontSize(10).fillColor("#000")
                 // .text("Task ID: ", { continued: true }).font("Helvetica-Bold").text(`${task._id}`, { align: "right" })
                 .moveDown(0.5) // Adds space between lines
@@ -633,8 +636,8 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
                 .font("Helvetica").text("Description: ", { continued: true }).font("Helvetica-Bold").text(`${task.description}`, { align: "right" })
                 .moveDown(0.5)
 
-                .font("Helvetica").text("Task Type: ", { continued: true }).font("Helvetica-Bold").text(`${task.taskType}`, { align: "right" })
-                .moveDown(0.5)
+                // .font("Helvetica").text("Task Type: ", { continued: true }).font("Helvetica-Bold").text(`${task.taskType}`, { align: "right" })
+                // .moveDown(0.5)
 
                 .font("Helvetica").text("Submission Date: ", { continued: true }).font("Helvetica-Bold").text(`${formattedDate}`, { align: "right" })
                 .moveDown(1); // Extra space after the last field
@@ -822,11 +825,16 @@ const readSingleRejectedTaskById = async ({ id }) => {
 
 cron.schedule("0 0 * * *", async () => {
     try {
-        await SubTask.updateMany(
-            { isCompleted: true, taskType: "Daily" },
-            { $set: { isCompleted: false } }
-        );
-
+        // Loop through Task (assuming it's an array of tasks)
+        for (const subTask of Task) {
+            if (subTask.taskType === "Daily") {
+                // Loop through each subTask's subTasks
+                for (const task of subTask.subTasks) {
+                    // Await the update operation to ensure completion before moving to the next
+                    await SubTask.updateOne({ _id: task._id }, { $set: { isCompleted: false } });
+                }
+            }
+        }
         console.log("Tasks reset successfully!");
     } catch (error) {
         console.error("Error updating tasks:", error);
@@ -836,11 +844,17 @@ cron.schedule("0 0 * * *", async () => {
 
 cron.schedule("0 0 * * 0", async () => {
     try {
-        await SubTask.updateMany(
-            { isCompleted: true, taskType: "Weekly" },
-            { $set: { isCompleted: false } }
-        );
-        console.log("Weekly Tasks reset successfully!");
+        // Loop through Task (assuming it's an array of tasks)
+        for (const subTask of Task) {
+            if (subTask.taskType === "Weekly") {
+                // Loop through each subTask's subTasks
+                for (const task of subTask.subTasks) {
+                    // Await the update operation to ensure completion before moving to the next
+                    await SubTask.updateOne({ _id: task._id }, { $set: { isCompleted: false } });
+                }
+            }
+        }
+        console.log("Tasks reset successfully!");
     } catch (error) {
         console.error("Error updating tasks:", error);
     }

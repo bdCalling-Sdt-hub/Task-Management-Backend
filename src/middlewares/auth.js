@@ -11,13 +11,13 @@ const verifyCallback =
     // console.log("req", req);
     // console.log(resolve, reject, requiredRights);
     
-    if (err || info || !user ) {
+    // if (err || info || !user ) {
 
-      console.log(err, info, user);
-      return reject(
-        new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized")
-      );
-    }
+    //   console.log(err, info, user);
+    //   return reject(
+    //     new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized")
+    //   );
+    // }
     req.user = user;
 
 
