@@ -343,7 +343,7 @@ const updateManySubTasks = async (tasks) => {
 
 const getAllSubTask = async (id) => { // Add this function
     try {
-        const task = await submitedTask.find({ managerId: id });
+        const task = await submitedTask.find({ userId: id });
 
         console.log("task", task);
 

@@ -27,8 +27,8 @@ const createMember = async (data) => {
         const weeklyTaskIds = Array.isArray(data.myWeeklyTasks) ? data.myWeeklyTasks : [];
 
         // Fetch all tasks in myDailyTasks and myWeeklyTasks
-        const dailyTasks = await Task.find({ _id: { $in: dailyTaskIds } });
-        const weeklyTasks = await Task.find({ _id: { $in: weeklyTaskIds } });
+        const dailyTasks = await SubTask.find({ _id: { $in: dailyTaskIds } });
+        const weeklyTasks = await SubTask.find({ _id: { $in: weeklyTaskIds } });
 
         // 5️⃣ Update Daily & Weekly Subtasks
         if (dailyTaskIds.length > 0) {
@@ -44,9 +44,9 @@ const createMember = async (data) => {
             );
         }
 
-        // 6️⃣ Update `totalAssignedCustomer` in Task
+        // 6️⃣ Update`totalAssignedCustomer` in Task
         if (data.mainTaskId) {
-            const task = await Task.findById(data.mainTaskId);
+            const task = await SubTask.findById(data.mainTaskId);
             if (task) {
                 task.totalAssignedCustomer = (task.totalAssignedCustomer || 0) + 1;
                 await task.save();
@@ -64,7 +64,7 @@ const createMember = async (data) => {
 
 
         if (dailyTaskIds[0] || weeklyTaskIds[0]) {
-            const task = await Task.findById(dailyTaskIds[0] || weeklyTaskIds[0]);
+            const task = await SubTask.findById(dailyTaskIds[0] || weeklyTaskIds[0]);
             task.totalAssignedCustomer = (task.totalAssignedCustomer || 0) + 1;
             task.save();
         }
@@ -87,11 +87,14 @@ const createMember = async (data) => {
             myWeeklyTasks: weeklyTasks.length > 0 ? weeklyTasks.map(task => task._id) : [],
 
             mainTaskId: data.mainTaskId || null,
-            assignedManagerName: assignedManagerName || "", 
+            assignedManagerName: assignedManagerName || "",
             // Set to null or an empty array if no tasks are provided
             dailyMainTaskId: dailyTaskIds.length > 0 ? dailyTaskIds[0] : null,
             weeklyMainTaskId: weeklyTaskIds.length > 0 ? weeklyTaskIds[0] : null,
         };
+
+        // console.log(newMemberData);
+
 
         // Create the new member in the database
         const newMember = await Member.create(newMemberData);
@@ -265,9 +268,13 @@ const login = async (email, password) => {
 
     // Check if the member exists
     const member = await Member.findOne({ email });
+    console.log(member);
 
-    if (member.userActivity === false) {
-        throw new ApiError(400, "You are Block by Admin !");
+    if (member.role == "customer") {
+        if (member.userActivity === false) {
+            throw new ApiError(400, "You are Block by Admin !");
+        }
+
     }
 
     if (!member) {

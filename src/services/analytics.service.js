@@ -69,6 +69,9 @@ const getTasksAnalyticsWeeklyAndMonthly = async (email, week = 1) => {
     // Step 6: Calculate total due tasks (not completed)
     const dueTasksCount = dueTasksDaily.length + dueTasksWeekly.length;
 
+
+    console.log(analytics, dueTasksCount);
+
     // Step 7: Return analytics and task statistics
     return {
         analytics,
