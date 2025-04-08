@@ -65,8 +65,10 @@ const createMember = async (data) => {
 
         if (dailyTaskIds[0] || weeklyTaskIds[0]) {
             const task = await SubTask.findById(dailyTaskIds[0] || weeklyTaskIds[0]);
-            task.totalAssignedCustomer = (task.totalAssignedCustomer || 0) + 1;
-            task.save();
+            if (task) {
+                task.totalAssignedCustomer = (task.totalAssignedCustomer || 0) + 1;
+                task.save();
+            }
         }
 
 
