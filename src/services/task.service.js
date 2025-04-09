@@ -570,8 +570,8 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         // Query tasks within the date range
         const tasks = await submitedTask.find({
             userId: userId,
-            submitedDate: { $gte: startDate, $lte: endDate },
-            taskType: searchType == "day" ? "Daily" : "Weekly"
+            // submitedDate: { $gte: startDate, $lte: endDate },
+            // taskType: searchType == "day" ? "Daily" : "Weekly"
         }).lean();
 
         if (!tasks.length) {
@@ -630,16 +630,16 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
                 // .text("Task ID: ", { continued: true }).font("Helvetica-Bold").text(`${task._id}`, { align: "right" })
                 .moveDown(0.5) // Adds space between lines
 
-                .font("Helvetica").text("Task Title: ", { continued: true }).font("Helvetica-Bold").text(`${task.title}`, { align: "right" })
+                .font("Helvetica").text("Antwort: ", { continued: true }).font("Helvetica-Bold").text(`${task.title}`, { align: "right" })
                 .moveDown(0.5)
 
-                .font("Helvetica").text("Description: ", { continued: true }).font("Helvetica-Bold").text(`${task.description}`, { align: "right" })
+                .font("Helvetica").text("Fehler/Information: ", { continued: true }).font("Helvetica-Bold").text(`${task.description}`, { align: "right" })
                 .moveDown(0.5)
 
                 // .font("Helvetica").text("Task Type: ", { continued: true }).font("Helvetica-Bold").text(`${task.taskType}`, { align: "right" })
                 // .moveDown(0.5)
 
-                .font("Helvetica").text("Submission Date: ", { continued: true }).font("Helvetica-Bold").text(`${formattedDate}`, { align: "right" })
+                .font("Helvetica").text("Erledigt am: ", { continued: true }).font("Helvetica-Bold").text(`${formattedDate}`, { align: "right" })
                 .moveDown(1); // Extra space after the last field
 
 
