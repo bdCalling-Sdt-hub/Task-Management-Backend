@@ -523,7 +523,6 @@ const getAllTaskViewedToManager = async (customerId) => {
     }
 };
 
-
 const getAllTaskSearchToManager = async (userId, date, searchType, managerId) => {
     try {
         if (!userId || !date) {
@@ -545,22 +544,19 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
             endDate.setUTCHours(23, 59, 59, 999);
 
         } else if (searchType === "week") {
-            // Get the numeric day of the month (1-31)
-            const dayOfMonth = queryDate.getUTCDate();
+            // Adjust start date to the start of the week (assuming Sunday as the start day)
+            const startOfWeek = new Date(queryDate);
+            startOfWeek.setUTCDate(queryDate.getUTCDate() - queryDate.getUTCDay()); // Adjust to start of the week
+            startOfWeek.setUTCHours(0, 0, 0, 0);
 
-            // Calculate which week block the date belongs to
-            const weekStartDay = Math.floor((dayOfMonth - 1) / 7) * 7 + 1;
-            const weekEndDay = weekStartDay + 6;
+            // Set the end of the week (6 days later)
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setUTCDate(startOfWeek.getUTCDate() + 6);
+            endOfWeek.setUTCHours(23, 59, 59, 999);
 
-            startDate = new Date(queryDate);
-            startDate.setUTCDate(weekStartDay);
-            startDate.setUTCHours(0, 0, 0, 0);
-
-            endDate = new Date(queryDate);
-            endDate.setUTCDate(weekEndDay);
-            endDate.setUTCHours(23, 59, 59, 999);
-        }
-        else {
+            startDate = startOfWeek;
+            endDate = endOfWeek;
+        } else {
             throw new ApiError(400, "Invalid search type. Use 'day' or 'week'.");
         }
 
@@ -570,13 +566,17 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         // Query tasks within the date range
         const tasks = await submitedTask.find({
             userId: userId,
-            // submitedDate: { $gte: startDate, $lte: endDate },
-            // taskType: searchType == "day" ? "Daily" : "Weekly"
+            submitedDate: { $gte: startDate, $lte: endDate },
+            taskType: searchType == "day" ? "Daily" : "Weekly",
         }).lean();
 
         if (!tasks.length) {
             throw new ApiError(404, `No tasks found for this customer on the given ${searchType}.`);
         }
+
+        // i want to find each subtask by tasks taskId
+        const taskIds = tasks.map(task => task.taskId);
+        const subtasksName = await SubTask.find({ _id: { $in: taskIds } }).lean();
 
         // ✅ Create PDF File
         const pdfDirectory = path.join(__dirname, "../../public/pdf");
@@ -593,7 +593,6 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         const writeStream = fs.createWriteStream(pdfPath);
         doc.pipe(writeStream);
 
-
         // ✅ Customer image and details
         const customerImage = path.join(__dirname, "../../public/uploads/logo.png"); // Absolute path
         const pageWidth = doc.page.width; // Get PDF width
@@ -604,44 +603,42 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         doc.text(`${searchType == "day" && "Daily Report" || searchType == "week" && "Weekly Report"}`, { align: "center" });
         doc.moveDown(5);
 
-
-
         const userName = await Member.findById(userId).select("memberName");
 
         doc.fontSize(12).text(`Customer: ${userName?.memberName}`);
+        doc.moveDown(0.3);
         doc.text(`Date Range: ${startDate.toISOString().split("T")[0]} to ${endDate.toISOString().split("T")[0]}`);
-        // doc.text(`Report Type: ${searchType.toUpperCase()}`);
         doc.moveDown();
 
 
-
         // ✅ Task List
-        tasks.forEach((task, index) => {
+        tasks.forEach((task) => {
+            doc.moveDown();
+
+
+            const filteredSubtasks = subtasksName.filter(subtask =>
+                subtask._id.toString() === task.taskId.toString()
+            );
+
+
+            doc.fontSize(14).font("Helvetica-Bold").fillColor("#004838").text(`${filteredSubtasks[0]?.subTaskName}`, { underline: true }).moveDown(0.5);
+
+
+            // Task Details
             const formattedDate = new Date(task.submitedDate).toLocaleDateString("en-US", {
                 day: "2-digit",
                 month: "long",
                 year: "numeric"
             });
 
-
-
-            doc.fontSize(12).fillColor("#333").text(` ${task.title}`, { underline: true }).moveDown(0.5);
             doc.fontSize(10).fillColor("#000")
-                // .text("Task ID: ", { continued: true }).font("Helvetica-Bold").text(`${task._id}`, { align: "right" })
                 .moveDown(0.5) // Adds space between lines
-
                 .font("Helvetica").text("Antwort: ", { continued: true }).font("Helvetica-Bold").text(`${task.title}`, { align: "right" })
                 .moveDown(0.5)
-
                 .font("Helvetica").text("Fehler/Information: ", { continued: true }).font("Helvetica-Bold").text(`${task.description}`, { align: "right" })
                 .moveDown(0.5)
-
-                // .font("Helvetica").text("Task Type: ", { continued: true }).font("Helvetica-Bold").text(`${task.taskType}`, { align: "right" })
-                // .moveDown(0.5)
-
                 .font("Helvetica").text("Erledigt am: ", { continued: true }).font("Helvetica-Bold").text(`${formattedDate}`, { align: "right" })
-                .moveDown(1); // Extra space after the last field
-
+                .moveDown(1);
 
             doc.moveDown(1);
             doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke(); // Separator Line
@@ -649,12 +646,13 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         });
 
         // ✅ Footer
-        doc.moveTo(50, 750).lineTo(550, 750).stroke();
-        doc.fontSize(10)
+        doc.moveTo(50, 745).lineTo(550, 750).stroke();
+        
+        doc.fontSize(8)
             .fillColor("#444444")
-            .text("Task Management Company", 50, 760, { align: "center" })
-            .text("Address: 123 Business Street, City, Country", 50, 775, { align: "center" })
-        // .text("Email: support@company.com | Phone: +1234567890", 50, 790, { align: "right" });
+            .text("AGD Menke Company LTD", 50, 762, { align: "center" })
+            .text("Address: 123 Business Street, City, Country", 50, 772, { align: "center" })
+            .text("Email: support@company.com | Phone: +1234567890", 50, 782, { align: "center" });
 
         doc.end();
 
@@ -675,7 +673,6 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         throw new ApiError(error.statusCode || 500, error.message || "Internal Server Error");
     }
 };
-
 
 
 const getAllCustommerForManager = async ({ id }) => {
