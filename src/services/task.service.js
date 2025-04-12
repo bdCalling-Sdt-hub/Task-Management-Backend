@@ -650,9 +650,9 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         
         doc.fontSize(8)
             .fillColor("#444444")
-            .text("AGD Menke Company LTD", 50, 762, { align: "center" })
-            .text("Address: 123 Business Street, City, Country", 50, 772, { align: "center" })
-            .text("Email: support@company.com | Phone: +1234567890", 50, 782, { align: "center" });
+            .text("AGD-Menke", 50, 762, { align: "center" })
+            .text("Franz-Meyer-Straße 16, 26219 Bösel", 50, 772, { align: "center" })
+            .text("Mail: info@agd-menke.de | Tel: 01737034165", 50, 782, { align: "center" });
 
         doc.end();
 
