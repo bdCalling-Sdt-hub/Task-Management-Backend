@@ -523,6 +523,8 @@ const getAllTaskViewedToManager = async (customerId) => {
     }
 };
 
+
+
 const getAllTaskSearchToManager = async (userId, date, searchType, managerId) => {
     try {
         if (!userId || !date) {
@@ -537,25 +539,31 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
 
         let startDate, endDate;
 
+        // Handle day search (exact date)
         if (searchType === "day") {
             startDate = new Date(queryDate);
-            startDate.setUTCHours(0, 0, 0, 0);
+            startDate.setUTCHours(0, 0, 0, 0); // Start at midnight
             endDate = new Date(queryDate);
-            endDate.setUTCHours(23, 59, 59, 999);
+            endDate.setUTCHours(23, 59, 59, 999); // End at 23:59:59.999
+        }
+        // Handle week search (get the week for the given date)
+        else if (searchType === "week") {
+            // Get the day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+            const dayOfWeek = queryDate.getUTCDay() ;
+            const dayOfMonth = queryDate.getDate();
 
-        } else if (searchType === "week") {
-            // Adjust start date to the start of the week (assuming Sunday as the start day)
+            // Adjust the date to get the start of the week (we treat Monday as the first day)
             const startOfWeek = new Date(queryDate);
-            startOfWeek.setUTCDate(queryDate.getUTCDate() - queryDate.getUTCDay()); // Adjust to start of the week
-            startOfWeek.setUTCHours(0, 0, 0, 0);
+            const diffToMonday = (dayOfWeek === 0 ? 7 : dayOfWeek - 1); // Sunday should adjust to previous Monday
+            startOfWeek.setUTCDate(dayOfMonth - diffToMonday); // Set to Monday
+            startOfWeek.setUTCHours(0, 0, 0, 0); // Set to start of day
 
-            // Set the end of the week (6 days later)
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setUTCDate(startOfWeek.getUTCDate() + 6);
-            endOfWeek.setUTCHours(23, 59, 59, 999);
+            // Calculate the end of the week (Sunday, 6 days after Monday)
+            endDate = new Date(startOfWeek);
+            endDate.setUTCDate(startOfWeek.getUTCDate() + 7); // Add 6 days to get Sunday
+            endDate.setUTCHours(23, 59, 59, 999); // Set to the end of the day
 
             startDate = startOfWeek;
-            endDate = endOfWeek;
         } else {
             throw new ApiError(400, "Invalid search type. Use 'day' or 'week'.");
         }
@@ -567,14 +575,14 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         const tasks = await submitedTask.find({
             userId: userId,
             submitedDate: { $gte: startDate, $lte: endDate },
-            taskType: searchType == "day" ? "Daily" : "Weekly",
+            taskType: searchType === "day" ? "Daily" : "Weekly",
         }).lean();
 
         if (!tasks.length) {
             throw new ApiError(404, `No tasks found for this customer on the given ${searchType}.`);
         }
 
-        // i want to find each subtask by tasks taskId
+        // Find subtasks by taskId
         const taskIds = tasks.map(task => task.taskId);
         const subtasksName = await SubTask.find({ _id: { $in: taskIds } }).lean();
 
@@ -600,7 +608,7 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         const centerX = (pageWidth - imageWidth) / 2; // Calculate center position
         doc.image(customerImage, centerX, 30, { width: imageWidth }) // Centered Image
         doc.moveDown(2);
-        doc.text(`${searchType == "day" && "Daily Report" || searchType == "week" && "Weekly Report"}`, { align: "center" });
+        doc.text(`${searchType === "day" ? "Daily Report" : "Weekly Report"}`, { align: "center" });
         doc.moveDown(5);
 
         const userName = await Member.findById(userId).select("memberName");
@@ -610,19 +618,15 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         doc.text(`Date Range: ${startDate.toISOString().split("T")[0]} to ${endDate.toISOString().split("T")[0]}`);
         doc.moveDown();
 
-
         // ✅ Task List
         tasks.forEach((task) => {
             doc.moveDown();
-
 
             const filteredSubtasks = subtasksName.filter(subtask =>
                 subtask._id.toString() === task.taskId.toString()
             );
 
-
             doc.fontSize(14).font("Helvetica-Bold").fillColor("#004838").text(`${filteredSubtasks[0]?.subTaskName}`, { underline: true }).moveDown(0.5);
-
 
             // Task Details
             const formattedDate = new Date(task.submitedDate).toLocaleDateString("en-US", {
@@ -633,11 +637,11 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
 
             doc.fontSize(10).fillColor("#000")
                 .moveDown(0.5) // Adds space between lines
-                .font("Helvetica").text("Antwort: ", { continued: true }).font("Helvetica-Bold").text(`${task.title}`, { align: "right" })
+                .font("Helvetica").text("Antwort: ", { continued: true }).font("Helvetica-Bold").text(`${task.title || "--"}`, { align: "right" })
                 .moveDown(0.5)
-                .font("Helvetica").text("Fehler/Information: ", { continued: true }).font("Helvetica-Bold").text(`${task.description}`, { align: "right" })
+                .font("Helvetica").text("Fehler/Information: ", { continued: true }).font("Helvetica-Bold").text(`${task.description || "--"}`, { align: "right" })
                 .moveDown(0.5)
-                .font("Helvetica").text("Erledigt am: ", { continued: true }).font("Helvetica-Bold").text(`${formattedDate}`, { align: "right" })
+                .font("Helvetica").text("Erledigt am: ", { continued: true }).font("Helvetica-Bold").text(`${formattedDate || "--"}`, { align: "right" })
                 .moveDown(1);
 
             doc.moveDown(1);
@@ -647,7 +651,7 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
 
         // ✅ Footer
         doc.moveTo(50, 745).lineTo(550, 750).stroke();
-        
+
         doc.fontSize(8)
             .fillColor("#444444")
             .text("AGD-Menke", 50, 762, { align: "center" })
@@ -673,6 +677,8 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         throw new ApiError(error.statusCode || 500, error.message || "Internal Server Error");
     }
 };
+
+
 
 
 const getAllCustommerForManager = async ({ id }) => {
