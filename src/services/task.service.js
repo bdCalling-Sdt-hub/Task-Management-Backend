@@ -465,11 +465,14 @@ const postTaskToManager = async (taskData, userID) => {
             resiveAdmin: false
         }));
 
-        // Insert modified data into `submitedTask`
-        const createMany = await submitedTask.insertMany(modifiedTaskData);
-        console.log(createMany, modifiedTaskData);
 
-        return createMany;
+        console.log("modifiedTaskData", modifiedTaskData);
+
+        // Insert modified data into `submitedTask`
+        // const createMany = await submitedTask.insertMany(modifiedTaskData);
+        // console.log(createMany, modifiedTaskData);
+
+        // return createMany;
     } catch (error) {
         console.error("Error in postTaskToManager:", error.message);
         throw new ApiError(500, error.message);
@@ -549,7 +552,7 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         // Handle week search (get the week for the given date)
         else if (searchType === "week") {
             // Get the day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-            const dayOfWeek = queryDate.getUTCDay() ;
+            const dayOfWeek = queryDate.getUTCDay();
             const dayOfMonth = queryDate.getDate();
 
             // Adjust the date to get the start of the week (we treat Monday as the first day)
