@@ -469,10 +469,10 @@ const postTaskToManager = async (taskData, userID) => {
         console.log("modifiedTaskData", modifiedTaskData);
 
         // Insert modified data into `submitedTask`
-        // const createMany = await submitedTask.insertMany(modifiedTaskData);
-        // console.log(createMany, modifiedTaskData);
+        const createMany = await submitedTask.insertMany(modifiedTaskData);
+        console.log(createMany, modifiedTaskData);
 
-        // return createMany;
+        return createMany;
     } catch (error) {
         console.error("Error in postTaskToManager:", error.message);
         throw new ApiError(500, error.message);

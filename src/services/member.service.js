@@ -108,8 +108,7 @@ const createMember = async (data) => {
 };
 
 
-
-const getSingleMember = async (id) => {
+const getSingleMember = async (id) => { 
     try {
         // Find member by ID and select only the required fields
         const member = await Member.findById(id).select(
@@ -149,7 +148,10 @@ const getAllMembers = async () => {
 
 const getAllCustomer = async () => {
     try {
-        const members = await Member.find({ role: "customer" }).populate("assignedManager", "memberName").populate('myWeeklyTasks').populate('myDailyTasks');
+        const members = await Member.find({ role: "customer" })
+        .populate("assignedManager", "memberName")
+        .populate('myWeeklyTasks')
+        .populate('myDailyTasks');
 
         // members.map((member) => {
         //     const res = Member.updateOne({ _id: '67a6bcc48c4081a380b6ac0d' }, { $set: { assignedManagerName: member.assignedManagerName } });
