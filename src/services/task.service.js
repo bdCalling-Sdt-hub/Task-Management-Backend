@@ -246,6 +246,9 @@ const getSingleSubTask = async (email) => {
         }
 
         // Return tasks along with the total and due counts
+
+
+
         return {
             tasks: weeklyTask,
             totalWeeklyTasks,
@@ -540,6 +543,8 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
             throw new ApiError(400, "Invalid date format. Use 'YYYY-MM-DD'.");
         }
 
+        console.log(userId, date, searchType, managerId);
+
         let startDate, endDate;
 
         // Handle day search (exact date)
@@ -571,8 +576,8 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
             throw new ApiError(400, "Invalid search type. Use 'day' or 'week'.");
         }
 
-        console.log("Start Date:", startDate.toISOString());
-        console.log("End Date:", endDate.toISOString());
+        // console.log("Start Date:", startDate.toISOString());
+        // console.log("End Date:", endDate.toISOString());
 
         // Query tasks within the date range
         const tasks = await submitedTask.find({
@@ -581,6 +586,8 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
             taskType: searchType === "day" ? "Daily" : "Weekly",
         }).lean();
 
+        console.log(userId);
+
         if (!tasks.length) {
             throw new ApiError(404, `No tasks found for this customer on the given ${searchType}.`);
         }
@@ -588,6 +595,8 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         // Find subtasks by taskId
         const taskIds = tasks.map(task => task.taskId);
         const subtasksName = await SubTask.find({ _id: { $in: taskIds } }).lean();
+
+
 
         // ✅ Create PDF File
         const pdfDirectory = path.join(__dirname, "../../public/pdf");
