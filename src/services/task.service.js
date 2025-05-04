@@ -616,7 +616,7 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         const pageWidth = doc.page.width; // Get PDF width
         const imageWidth = 100; // Set your image width
         const centerX = (pageWidth - imageWidth) / 2; // Calculate center position
-        doc.image('/uploads/logo.png', centerX, 30, { width: imageWidth }) // Centered Image
+        doc.image('/uploads/logo-2.png', centerX, 30, { width: imageWidth }) // Centered Image
         doc.moveDown(2);
         doc.text(`${searchType === "day" ? "Daily Report" : "Weekly Report"}`, { align: "center" });
         doc.moveDown(5);
