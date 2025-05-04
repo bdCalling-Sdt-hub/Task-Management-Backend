@@ -595,14 +595,14 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         // Set PDF file path
         const filename = `task_report_${Date.now()}.pdf`;
         const pdfPath = path.join(pdfDirectory, filename);
-        const publicPath = `/public/pdf/${filename}`; // This will be returned in the response
+        const publicPath = `/pdf/${filename}`; // This will be returned in the response
 
         const doc = new PDFDocument({ size: "A4", margin: 50 });
         const writeStream = fs.createWriteStream(pdfPath);
         doc.pipe(writeStream);
 
         // ✅ Customer image and details
-        const customerImage = path.join(__dirname, "/public/uploads/logo.png"); // Absolute path
+        const customerImage = path.join(__dirname, "uploads/logo.png"); // Absolute path
 
         console.log(customerImage);
 
