@@ -602,9 +602,9 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         doc.pipe(writeStream);
 
         // ✅ Customer image and details
-        // const customerImage = path.join(__dirname, "./../../public/uploads/logo.png"); // Absolute path
+        const customerImage = path.join(__dirname, "/public/uploads/logo.png"); // Absolute path
 
-        // console.log(customerImage);
+        console.log(customerImage);
 
         // Check if the image exists
         // if (!fs.existsSync(customerImage)) {
