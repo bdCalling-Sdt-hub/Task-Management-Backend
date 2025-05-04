@@ -543,8 +543,6 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
             throw new ApiError(400, "Invalid date format. Use 'YYYY-MM-DD'.");
         }
 
-        console.log(userId, date, searchType, managerId);
-
         let startDate, endDate;
 
         // Handle day search (exact date)
@@ -556,17 +554,14 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         }
         // Handle week search (get the week for the given date)
         else if (searchType === "week") {
-            // Get the day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
             const dayOfWeek = queryDate.getUTCDay();
             const dayOfMonth = queryDate.getDate();
 
-            // Adjust the date to get the start of the week (we treat Monday as the first day)
             const startOfWeek = new Date(queryDate);
             const diffToMonday = (dayOfWeek === 0 ? 7 : dayOfWeek - 1); // Sunday should adjust to previous Monday
             startOfWeek.setUTCDate(dayOfMonth - diffToMonday); // Set to Monday
             startOfWeek.setUTCHours(0, 0, 0, 0); // Set to start of day
 
-            // Calculate the end of the week (Sunday, 6 days after Monday)
             endDate = new Date(startOfWeek);
             endDate.setUTCDate(startOfWeek.getUTCDate() + 7); // Add 6 days to get Sunday
             endDate.setUTCHours(23, 59, 59, 999); // Set to the end of the day
@@ -576,17 +571,12 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
             throw new ApiError(400, "Invalid search type. Use 'day' or 'week'.");
         }
 
-        // console.log("Start Date:", startDate.toISOString());
-        // console.log("End Date:", endDate.toISOString());
-
         // Query tasks within the date range
         const tasks = await submitedTask.find({
             userId: userId,
             submitedDate: { $gte: startDate, $lte: endDate },
             taskType: searchType === "day" ? "Daily" : "Weekly",
         }).lean();
-
-        console.log(userId);
 
         if (!tasks.length) {
             throw new ApiError(404, `No tasks found for this customer on the given ${searchType}.`);
@@ -595,8 +585,6 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         // Find subtasks by taskId
         const taskIds = tasks.map(task => task.taskId);
         const subtasksName = await SubTask.find({ _id: { $in: taskIds } }).lean();
-
-
 
         // ✅ Create PDF File
         const pdfDirectory = path.join(__dirname, "../../public/pdf");
@@ -615,6 +603,14 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
 
         // ✅ Customer image and details
         const customerImage = path.join(__dirname, "../../public/uploads/logo.png"); // Absolute path
+
+        // Check if the image exists
+        if (!fs.existsSync(customerImage)) {
+            console.error("Image not found:", customerImage);
+            // Optionally, use a fallback image if the logo is missing
+            throw new ApiError(500, "Logo image file is missing or invalid");
+        }
+
         const pageWidth = doc.page.width; // Get PDF width
         const imageWidth = 100; // Set your image width
         const centerX = (pageWidth - imageWidth) / 2; // Calculate center position
@@ -689,7 +685,6 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         throw new ApiError(error.statusCode || 500, error.message || "Internal Server Error");
     }
 };
-
 
 
 
