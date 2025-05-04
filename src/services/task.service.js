@@ -602,9 +602,9 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         doc.pipe(writeStream);
 
         // ✅ Customer image and details
-        const customerImage = path.join(__dirname, "uploads/logo.png"); // Absolute path
+        // const customerImage = path.join(__dirname, "uploads/logo.png"); // Absolute path
 
-        console.log(customerImage);
+        // console.log(customerImage);
 
         // // Check if the image exists
         // if (!fs.existsSync(customerImage)) {
@@ -616,7 +616,7 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         const pageWidth = doc.page.width; // Get PDF width
         const imageWidth = 100; // Set your image width
         const centerX = (pageWidth - imageWidth) / 2; // Calculate center position
-        doc.image(customerImage, centerX, 30, { width: imageWidth }) // Centered Image
+        doc.image('/public/uploads/logo.png', centerX, 30, { width: imageWidth }) // Centered Image
         doc.moveDown(2);
         doc.text(`${searchType === "day" ? "Daily Report" : "Weekly Report"}`, { align: "center" });
         doc.moveDown(5);
