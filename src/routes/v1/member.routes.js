@@ -3,7 +3,7 @@ const { memberController } = require('../../controllers');
 const userFileUploadMiddleware = require("../../middlewares/fileUpload");
 const auth = require('../../middlewares/auth');
 const chewckAuth = require('../../middlewares/memberAuth');
-const UPLOADS_FOLDER_USERS = "./public/uploads/members";
+const UPLOADS_FOLDER_USERS = "/uploads/members";
 const uploadUsers = userFileUploadMiddleware(UPLOADS_FOLDER_USERS);
 
 const router = express.Router();
