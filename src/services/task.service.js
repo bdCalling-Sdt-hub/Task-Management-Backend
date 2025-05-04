@@ -595,7 +595,7 @@ const getAllTaskSearchToManager = async (userId, date, searchType, managerId) =>
         // Set PDF file path
         const filename = `task_report_${Date.now()}.pdf`;
         const pdfPath = path.join(pdfDirectory, filename);
-        const publicPath = `../../public/pdf/${filename}`; // This will be returned in the response
+        const publicPath = `/public/pdf/${filename}`; // This will be returned in the response
 
         const doc = new PDFDocument({ size: "A4", margin: 50 });
         const writeStream = fs.createWriteStream(pdfPath);
