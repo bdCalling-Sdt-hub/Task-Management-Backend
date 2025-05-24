@@ -57,12 +57,12 @@ const memberSchema = new mongoose.Schema({
   
     dailyMainTaskId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Task',
+        ref: 'SubTask',
         default: "",
     },
     weeklyMainTaskId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Task',
+        ref: 'SubTask',
         default: "",
     },
     dailyTitle: {

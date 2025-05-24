@@ -155,13 +155,13 @@ const getSingleMember = async (id) => {
     try {
         // Find member by ID and select only the required fields
         const member = await Member.findById(id).select(
-            "_id memberName profileImage location email role password userActivity assignedManagerName myDailyTasks myWeeklyTasks mainTaskId weeklyMainTaskId dailyMainTaskId "
+            "_id memberName profileImage location email role password userActivity assignedManagerName myDailyTasks myWeeklyTasks mainTaskId dailyTitle dailyDescription weeklyTitle weeklyDescription assignedManager assignedManagerName totalAssignedCustomer dailyMainTaskId weeklyMainTaskId"
         )
             .populate("assignedManager", "memberName")
             .populate('myDailyTasks', 'subTaskName')
             .populate('myWeeklyTasks', 'subTaskName')
-            .populate('dailyMainTaskId', 'taskClassName') // Populate dailyMainTaskId
-            .populate('weeklyMainTaskId', 'taskClassName'); // Populate weeklyMainTaskId
+            .populate('dailyMainTaskId')
+            .populate('weeklyMainTaskId');
 
         console.log(member);
 
