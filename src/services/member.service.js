@@ -20,15 +20,58 @@ const createMember = async (data) => {
         // 3️⃣ Validate password length & Hash Password
         if (data.password.length < 6) {
             throw new ApiError(400, "Password must be at least 6 characters");
+
         }
 
-        // 4️⃣ Fetch & Validate Tasks
-        const dailyTaskIds = Array.isArray(data.myDailyTasks) ? data.myDailyTasks : [];
-        const weeklyTaskIds = Array.isArray(data.myWeeklyTasks) ? data.myWeeklyTasks : [];
+
+        const minDailyTasks = await Task.find({ _id: data.dailyMainTaskId });
+        const minWeeklyTasks = await Task.find({ _id: data.weeklyMainTaskId });
+        // 4️⃣ Fetch Daily & Weekly Tasks based on the provided IDs
+
+
+        const tasks = minDailyTasks[0]?.subTasks || [];
+        const updatedTasks = await Promise.all(
+            tasks.map(async (taskId) => {
+                console.log("Task ID:", taskId);
+                const updatedTask = await SubTask.findById(taskId);
+                console.log("Updated Task:", updatedTask);
+                return updatedTask;
+            })
+        );
+        const weeklyTaskssdsdf = minWeeklyTasks[0]?.subTasks || [];
+        const updatedWeeklyTasks = await Promise.all(
+            weeklyTaskssdsdf.map(async (taskId) => {
+                console.log("Task ID:", taskId);
+                const updatedTask = await SubTask.findById(taskId);
+                console.log("Updated Task:", updatedTask);
+                return updatedTask;
+            })
+        );
+
+        let dailyTaskIds = [];
+        let weeklyTaskIds = [];
+
+        if (weeklyTaskssdsdf[0]?.taskType === "Weekly") {
+            updatedWeeklyTasks.forEach((task) => {
+                weeklyTaskIds.push(task._id);
+            })
+        }
+
+        if (minDailyTasks[0]?.taskType === "Daily") {
+            updatedTasks.forEach((task) => {
+                dailyTaskIds.push(task._id);
+            })
+
+        }
+
+
+        // console.log(dailyTaskIds);
 
         // Fetch all tasks in myDailyTasks and myWeeklyTasks
         const dailyTasks = await SubTask.find({ _id: { $in: dailyTaskIds } });
         const weeklyTasks = await SubTask.find({ _id: { $in: weeklyTaskIds } });
+
+        console.log(dailyTasks, weeklyTasks);
 
         // 5️⃣ Update Daily & Weekly Subtasks
         if (dailyTaskIds.length > 0) {
@@ -88,14 +131,14 @@ const createMember = async (data) => {
             myDailyTasks: dailyTasks.length > 0 ? dailyTasks.map(task => task._id) : [],
             myWeeklyTasks: weeklyTasks.length > 0 ? weeklyTasks.map(task => task._id) : [],
 
-            mainTaskId: data.mainTaskId || null,
+            mainTaskId: data.mainTaskId,
             assignedManagerName: assignedManagerName || "",
             // Set to null or an empty array if no tasks are provided
             dailyMainTaskId: dailyTaskIds.length > 0 ? dailyTaskIds[0] : null,
             weeklyMainTaskId: weeklyTaskIds.length > 0 ? weeklyTaskIds[0] : null,
         };
 
-        // console.log(newMemberData);
+        console.log(newMemberData);
 
 
         // Create the new member in the database
@@ -108,7 +151,7 @@ const createMember = async (data) => {
 };
 
 
-const getSingleMember = async (id) => { 
+const getSingleMember = async (id) => {
     try {
         // Find member by ID and select only the required fields
         const member = await Member.findById(id).select(
@@ -149,9 +192,9 @@ const getAllMembers = async () => {
 const getAllCustomer = async () => {
     try {
         const members = await Member.find({ role: "customer" })
-        .populate("assignedManager", "memberName")
-        .populate('myWeeklyTasks')
-        .populate('myDailyTasks');
+            .populate("assignedManager", "memberName")
+            .populate('myWeeklyTasks')
+            .populate('myDailyTasks');
 
         // members.map((member) => {
         //     const res = Member.updateOne({ _id: '67a6bcc48c4081a380b6ac0d' }, { $set: { assignedManagerName: member.assignedManagerName } });

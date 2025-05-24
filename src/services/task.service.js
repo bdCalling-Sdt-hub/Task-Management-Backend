@@ -89,14 +89,25 @@ const getAllTasks = async (page = 1, limit = 10) => {
         const taskWithSubTasks = await Promise.all(
             tasks.map(async (task) => {
                 let subTasksData = [];
+
+                const totalMembers = await Member.find({ dailyMainTaskId: task._id });
+                const totalWeeklyMembers = await Member.find({ weeklyMainTaskId: task._id });
+
+                const totalAssign = [...totalMembers, ...totalWeeklyMembers];
+
+                // console.log(totalAssign.length);
+
+                task.totalAssignedCustomer = totalAssign.length;
+
+
                 if (task.subTasks && task.subTasks.length > 0) {
                     // Populate subTasks only if there are any subtask IDs
                     subTasksData = await SubTask.find({ _id: { $in: task.subTasks } }).lean();
+
+
+                 
                 }
-
                 // Ensure subTasks are not empty before querying members
-
-
                 // Return the task with its populated subTasks and the members assigned to this task
                 return {
                     ...task.toObject(),
@@ -104,6 +115,8 @@ const getAllTasks = async (page = 1, limit = 10) => {
                 };
             })
         );
+
+        console.log(taskWithSubTasks);
 
         // Get total task count for pagination
         const totalTasks = await Task.countDocuments(); // Get the total number of tasks

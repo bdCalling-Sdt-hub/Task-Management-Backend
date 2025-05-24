@@ -40,24 +40,21 @@ const memberSchema = new mongoose.Schema({
         ref: 'Member', // Assuming you have a Manager model
     },
     myTasks: {
-        type: [], // Store task IDs
+        type: String, // Store task IDs
         ref: 'Task',
-        default: []
+        default: ""
     },
     myDailyTasks: { // ✅ Added myDailyTasks
-        type: [],
+        type: [mongoose.Schema.Types.ObjectId], // Changed to ObjectId array
         ref: 'SubTask',
         default: []
     },
     myWeeklyTasks: { // ✅ Added myWeeklyTasks
-        type: [],
+        type: [mongoose.Schema.Types.ObjectId], // Changed to ObjectId array
         ref: 'SubTask',
         default: []
     },
-    mainTaskId: {
-        type: String,
-        default: "",
-    },
+  
     dailyMainTaskId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Task',

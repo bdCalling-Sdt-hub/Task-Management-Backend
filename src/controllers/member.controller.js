@@ -14,8 +14,7 @@ const createMember = catchAsync(async (req, res) => {
             message: "Member created successfully",
             status: "OK",
             statusCode: httpStatus.CREATED,
-            data: newMember
-            ,
+            data: newMember,
         })
     );
 });

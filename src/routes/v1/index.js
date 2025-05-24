@@ -4,7 +4,8 @@ const authRoute = require("./auth.routes");
 const userRoute = require("./user.routes");
 const memberRoute = require("./member.routes");
 const taskRoute = require("./task.routes");
-const analyticsRoute = require("./analytics.routes");
+const analyticsRoute = require("./analytics.routes"); 
+const privacyPolicyRoute = require("./privacyPolicy.routes");
 
 const router = express.Router();
 
@@ -28,6 +29,10 @@ const defaultRoutes = [
   {
     path: "/analytics",
     route: analyticsRoute,
+  },
+  {
+    path: "/privacy-policy",
+    route: privacyPolicyRoute,
   }
 
 ];
