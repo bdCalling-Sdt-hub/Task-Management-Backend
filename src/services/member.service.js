@@ -32,26 +32,27 @@ const createMember = async (data) => {
         const tasks = minDailyTasks[0]?.subTasks || [];
         const updatedTasks = await Promise.all(
             tasks.map(async (taskId) => {
-                console.log("Task ID:", taskId);
+                // console.log("Task ID:", taskId);
                 const updatedTask = await SubTask.findById(taskId);
-                console.log("Updated Task:", updatedTask);
+                // console.log("Updated Task:", updatedTask);
                 return updatedTask;
             })
         );
         const weeklyTaskssdsdf = minWeeklyTasks[0]?.subTasks || [];
         const updatedWeeklyTasks = await Promise.all(
             weeklyTaskssdsdf.map(async (taskId) => {
-                console.log("Task ID:", taskId);
+                // console.log("Task ID:", taskId);
                 const updatedTask = await SubTask.findById(taskId);
                 console.log("Updated Task:", updatedTask);
                 return updatedTask;
             })
         );
+ 
 
         let dailyTaskIds = [];
         let weeklyTaskIds = [];
 
-        if (weeklyTaskssdsdf[0]?.taskType === "Weekly") {
+        if (minWeeklyTasks[0]?.taskType === "Weekly") {
             updatedWeeklyTasks.forEach((task) => {
                 weeklyTaskIds.push(task._id);
             })
@@ -71,7 +72,7 @@ const createMember = async (data) => {
         const dailyTasks = await SubTask.find({ _id: { $in: dailyTaskIds } });
         const weeklyTasks = await SubTask.find({ _id: { $in: weeklyTaskIds } });
 
-        console.log(dailyTasks, weeklyTasks);
+        // console.log("my Daily Tasks:", dailyTasks, "my Weekly Tasks:", weeklyTasks);
 
         // 5️⃣ Update Daily & Weekly Subtasks
         if (dailyTaskIds.length > 0) {
@@ -138,7 +139,6 @@ const createMember = async (data) => {
             weeklyMainTaskId: weeklyTaskIds.length > 0 ? weeklyTaskIds[0] : null,
         };
 
-        console.log(newMemberData);
 
 
         // Create the new member in the database
