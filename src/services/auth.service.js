@@ -199,7 +199,6 @@ const editUser = async (id, reqBody) => {
   user.phoneNumber = reqBody.phoneNumber;
   user.role = reqBody.role;
   user.message = reqBody.message;
-  user.password = decodeURIComponent(reqBody.password);
   await user.save();
   return user;
 }
