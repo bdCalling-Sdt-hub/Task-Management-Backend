@@ -163,7 +163,6 @@ const getSingleMember = async (id) => {
             .populate('dailyMainTaskId')
             .populate('weeklyMainTaskId');
 
-        console.log(member);
 
         if (!member) {
             throw new ApiError(404, "Member not found");
