@@ -113,17 +113,12 @@ const getAllTasks = async () => {
         );
 
         console.log(taskWithSubTasks);
-
-        // Get total task count for pagination
-        const totalTasks = await Task.countDocuments(); // Get the total number of tasks
-        const totalPages = Math.ceil(totalTasks / limit); // Calculate the total number of pages
+ 
 
         // Return tasks with populated subTasks, pagination info
         return {
             tasks: taskWithSubTasks,
-            totalTasks,
-            totalPages,
-            currentPage: page,
+           
         };
     } catch (error) {
         throw new ApiError(500, error.message); // Handle any errors
