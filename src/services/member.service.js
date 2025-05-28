@@ -8,6 +8,7 @@ const createMember = async (data) => {
     try {
         // 1️⃣ Check if the member already exists
         const memberExist = await Member.findOne({ email: data.email });
+
         if (memberExist) {
             throw new ApiError(400, "This email already exists");
         }
@@ -135,8 +136,8 @@ const createMember = async (data) => {
             mainTaskId: data.mainTaskId,
             assignedManagerName: assignedManagerName || "",
             // Set to null or an empty array if no tasks are provided
-            dailyMainTaskId: dailyTaskIds.length > 0 ? dailyTaskIds[0] : null,
-            weeklyMainTaskId: weeklyTaskIds.length > 0 ? weeklyTaskIds[0] : null,
+            dailyMainTaskId: data.dailyMainTaskId || null,
+            weeklyMainTaskId: data.weeklyMainTaskId || null,
         };
 
 
@@ -160,7 +161,7 @@ const getSingleMember = async (id) => {
             .populate("assignedManager", "memberName")
             .populate('myDailyTasks', 'subTaskName')
             .populate('myWeeklyTasks', 'subTaskName')
-            
+
             .populate('dailyMainTaskId')
             .populate('weeklyMainTaskId');
 
