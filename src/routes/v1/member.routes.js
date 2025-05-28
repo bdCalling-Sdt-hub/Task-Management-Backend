@@ -15,6 +15,7 @@ router.get('/all/members', auth("commonForAdmin"), memberController.getAllMember
 router.patch('/:id', auth("commonForAdmin"), memberController.updateMember);
 
 router.get('/:id', auth("commonForAdmin"), memberController.getSingleMemberAsAdmin);
+
 router.get('/all/manager', auth("commonForAdmin"), memberController.getAllManager);
 router.get('/all/customer', auth("commonForAdmin"), memberController.getAllCustomer);
 

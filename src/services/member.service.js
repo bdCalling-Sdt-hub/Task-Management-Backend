@@ -160,6 +160,7 @@ const getSingleMember = async (id) => {
             .populate("assignedManager", "memberName")
             .populate('myDailyTasks', 'subTaskName')
             .populate('myWeeklyTasks', 'subTaskName')
+            
             .populate('dailyMainTaskId')
             .populate('weeklyMainTaskId');
 
