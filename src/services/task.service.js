@@ -73,61 +73,15 @@ const updateTaskAdmin = async (id, taskData) => {
     }
 }
 
-const getAllTasks = async (page = 1, limit = 10) => {
+const getAllTasks = async () => {
     try {
-        const skip = (page - 1) * limit; // Calculate the number of documents to skip
 
         // Fetch tasks with pagination
         const tasks = await Task.find()
-            .skip(skip)
-            .limit(limit); // Limit the number of tasks returned
-        if (tasks.length === 0) {
-            throw new ApiError(404, "No tasks found");
-        }
-
-        // Fetch and populate subTasks data for each task
-        const taskWithSubTasks = await Promise.all(
-            tasks.map(async (task) => {
-                let subTasksData = [];
-
-                const totalMembers = await Member.find({ dailyMainTaskId: task._id });
-                const totalWeeklyMembers = await Member.find({ weeklyMainTaskId: task._id });
-
-                const totalAssign = [...totalMembers, ...totalWeeklyMembers];
-
-                // console.log(totalAssign.length);
-
-                task.totalAssignedCustomer = totalAssign.length;
-
-
-                if (task.subTasks && task.subTasks.length > 0) {
-                    // Populate subTasks only if there are any subtask IDs
-                    subTasksData = await SubTask.find({ _id: { $in: task.subTasks } }).lean();
-
-
-                 
-                }
-                // Ensure subTasks are not empty before querying members
-                // Return the task with its populated subTasks and the members assigned to this task
-                return {
-                    ...task.toObject(),
-                    subTasks: subTasksData
-                };
-            })
-        );
-
-        console.log(taskWithSubTasks);
-
-        // Get total task count for pagination
-        const totalTasks = await Task.countDocuments(); // Get the total number of tasks
-        const totalPages = Math.ceil(totalTasks / limit); // Calculate the total number of pages
 
         // Return tasks with populated subTasks, pagination info
         return {
-            tasks: taskWithSubTasks,
-            totalTasks,
-            totalPages,
-            currentPage: page,
+            tasks: tasks
         };
     } catch (error) {
         throw new ApiError(500, error.message); // Handle any errors

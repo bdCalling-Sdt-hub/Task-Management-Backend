@@ -200,7 +200,7 @@ const createSubTask = async (req, res) => {
 const getAllTasks = async (req, res) => {
     try {
         const { page = 1, limit = 10 } = req.query; // Get page and limit from query params (defaults to 1 and 10 if not provided)
-        const paginationResult = await taskService.getAllTasks(Number(page), Number(limit));
+        const paginationResult = await taskService.getAllTasks();
 
         res.status(httpStatus.OK).json(
             response({
